@@ -3,138 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Class Attendance - มล.อุปถัมภ์ไทยคีรี</title>
+    <title>AI Class Management - มล.อุปถัมภ์ไทยคีรี</title>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
-        /* 🔴 ปรับแต่งให้ UI อยู่ตรงกลางเป๊ะ 100% 🔴 */
-        body { 
-            font-family: 'Sarabun', sans-serif; 
-            background: #f8f9fa; 
-            margin: 0; 
-            padding: 15px; 
-            display: flex; 
-            justify-content: center; /* จัดกลางแนวนอน */
-            align-items: center;     /* จัดกลางแนวตั้ง */
-            min-height: 100vh;       /* ให้เต็มความสูงจอ */
-            box-sizing: border-box;
-            color: #333; 
-        }
+        body { font-family: 'Sarabun', sans-serif; background: #f8f9fa; margin: 0; padding: 20px; color: #333; }
+        .container { width: 100%; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
         
-        .container { 
-            width: 100%; 
-            max-width: 550px; /* บีบขนาดให้พอดี ไม่กว้างเกินไป */
-            display: flex; 
-            flex-direction: column; 
-            gap: 20px; 
-        }
+        /* Layout ซ้าย-ขวา สำหรับหน้าแผงควบคุม */
+        .dashboard-grid { display: grid; grid-template-columns: 450px 1fr; gap: 25px; align-items: start; }
+        @media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } }
+
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 20px rgba(220, 53, 69, 0.1); border-top: 5px solid #dc3545; }
+        .login-card { max-width: 450px; margin: 50px auto; }
         
-        .card { 
-            background: white; 
-            width: 100%; 
-            padding: 30px; 
-            border-radius: 15px; 
-            box-shadow: 0 10px 30px rgba(220, 53, 69, 0.15); 
-            box-sizing: border-box; 
-        }
-        
-        h2 { color: #dc3545; margin-top: 0; text-align: center; border-bottom: 3px solid #dc3545; padding-bottom: 15px; line-height: 1.4; }
-        h3 { color: #dc3545; margin-top: 0; text-align: center; font-size: 1.2rem; }
-        
-        input, select { width: 100%; padding: 12px; margin: 8px 0 15px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        h2, h3 { color: #dc3545; text-align: center; margin-top: 0; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
         input:focus, select:focus { border-color: #dc3545; outline: none; }
         
-        button { width: 100%; padding: 14px; margin: 8px 0; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
-        button:active { transform: scale(0.98); }
-        
-        /* โทนสีปุ่ม */
-        .btn-red { background: #dc3545; color: white; }
-        .btn-red:hover { background: #c82333; }
-        .btn-darkred { background: #a71d2a; color: white; }
-        .btn-darkred:hover { background: #8e1824; }
+        button { width: 100%; padding: 12px; margin: 5px 0; background: #dc3545; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #b02a37; }
+        .btn-dark { background: #842029; } .btn-dark:hover { background: #5c161d; }
         .btn-outline { background: white; color: #dc3545; border: 2px solid #dc3545; }
         .btn-outline:hover { background: #dc3545; color: white; }
+        .btn-small { width: auto; padding: 6px 12px; font-size: 13px; margin: 0 2px; }
 
         .hidden { display: none !important; }
-        
-        #video-container { position: relative; width: 100%; background: #000; border-radius: 10px; overflow: hidden; min-height: 300px; display: flex; align-items: center; border: 4px solid #dc3545; margin-top: 15px; }
-        video { width: 100%; height: auto; display: block; }
+
+        /* วิดีโอสแกนหน้า */
+        #video-container { position: relative; width: 100%; background: #000; border-radius: 8px; overflow: hidden; border: 3px solid #dc3545; }
+        video { width: 100%; display: block; }
         canvas { position: absolute; top: 0; left: 0; }
-        
-        #status-msg { margin-top: 15px; padding: 15px; border-radius: 8px; font-weight: bold; background: #f8d7da; color: #721c24; text-align: center; border: 1px solid #f5c6cb; font-size: 16px; }
+        #status-msg { margin-top: 15px; padding: 12px; border-radius: 8px; font-weight: bold; text-align: center; background: #f8d7da; color: #842029; }
 
-        /* ตารางรายชื่อ */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-        thead { background-color: #dc3545; color: white; }
-        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
-        .status-มา { color: #dc3545; font-weight: bold; }
-        .status-ลา { color: #007bff; }
-        .status-สาย { color: #ffc107; color: black; }
-        td button { width: auto; padding: 6px 12px; font-size: 12px; margin: 0 2px; border-radius: 5px; }
+        /* ตารางรายชื่อด้านขวา */
+        .table-wrap { max-height: 450px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 15px; }
+        thead { position: sticky; top: 0; background: #dc3545; color: white; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        tr:hover { background: #fdf2f3; }
+        .status-มา { color: #198754; font-weight: bold; }
+        .status-ลา { color: #0dcaf0; font-weight: bold; }
+        .status-สาย { color: #ffc107; font-weight: bold; color: #856404; }
 
-        /* กล่องบันทึกล่าสุด */
-        .log-box { margin-top: 20px; padding-top: 15px; border-top: 2px dashed #eee; }
-        #liveLogs { font-size: 14px; color: #555; max-height: 200px; overflow-y: auto; }
-        #liveLogs div { padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+        .log-box { margin-top: 15px; padding: 15px; background: #f8f9fa; border-left: 4px solid #dc3545; border-radius: 0 8px 8px 0; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="card">
-        <div id="loginView">
-            <h2>ระบบบริหารห้องเรียน AI<br><span style="font-size: 1rem; color: #666; font-weight: normal;">มล.อุปถัมภ์ไทยคีรี</span></h2>
-            
-            <button class="btn-darkred" onclick="app.startFaceLogin()">📸 สแกนหน้าเข้าสู่ระบบ (Face Login)</button>
-            
-            <div style="text-align: center; margin: 20px 0; color: #999; font-weight: bold;">--- หรือ ---</div>
-            
-            <label style="color: #dc3545; font-weight: bold;">รหัสประจำตัว:</label>
-            <input type="text" id="user" placeholder="เช่น T001 หรือ 67001">
-            <label style="color: #dc3545; font-weight: bold;">รหัสผ่าน:</label>
-            <input type="password" id="pass" placeholder="รหัสผ่าน">
-            <button class="btn-red" onclick="app.passLogin()">เข้าสู่ระบบด้วยรหัสผ่าน</button>
-        </div>
+    <div id="loginView" class="card login-card">
+        <h2>มล.อุปถัมภ์ไทยคีรี AI 🔴⚪</h2>
+        <button onclick="app.startFaceLogin()" class="btn-dark">📸 สแกนหน้าเข้าสู่ระบบ (ครู)</button>
+        <div style="text-align: center; margin: 15px 0; color: #888;">--- หรือ ---</div>
+        <input type="text" id="user" placeholder="รหัสประจำตัวครู (เช่น T001)">
+        <input type="password" id="pass" placeholder="รหัสผ่าน">
+        <button onclick="app.passLogin()">เข้าสู่ระบบด้วยรหัสผ่าน</button>
+    </div>
 
-        <div id="mainView" class="hidden">
-            <h3 id="welcome">สวัสดีครับ</h3>
-            
-            <div id="setupClass">
-                <select id="roomSel" onchange="app.loadClassroom()">
-                    <option value="">-- 1. เลือกห้องเรียน --</option>
-                    <option>ป.5/1</option><option>ป.5/2</option>
-                </select>
-                <select id="subSel">
-                    <option>วิทยาการคำนวณ</option><option>คอมพิวเตอร์เพิ่มเติม</option>
-                </select>
-                <select id="periodSel">
-                    <option value="1">คาบที่ 1</option><option value="2">คาบที่ 2</option><option value="3">คาบที่ 3</option>
-                </select>
-                
-                <button class="btn-red" onclick="app.startAttendance()">📸 เริ่มแสกนหน้าเช็คชื่อ (เข้าเรียน)</button>
-                
-                <button class="btn-darkred" onclick="app.openEnrollment()">👤 เพิ่ม/อัปเดตใบหน้าลงระบบ (Add User Face)</button>
-                
-                <button class="btn-outline" onclick="location.reload()">ออกจากระบบ</button>
-            </div>
-
-            <div id="video-wrap" class="hidden">
-                <h3 id="camTitle">โหมด AI สแกนใบหน้า</h3>
-                <div id="video-container">
-                    <video id="video" width="400" height="300" autoplay muted playsinline></video>
+    <div id="mainView" class="hidden">
+        <h3 id="welcome" style="text-align: left; border-bottom: 2px solid #eee; padding-bottom: 10px;">สวัสดีครับคุณครู</h3>
+        
+        <div class="dashboard-grid">
+            <div class="card">
+                <div id="setupClass">
+                    <label style="color: #dc3545; font-weight: bold;">ตั้งค่าคาบเรียน:</label>
+                    <select id="roomSel" onchange="app.loadClassroom()">
+                        <option value="">-- 1. เลือกห้องเรียน --</option>
+                        <option>ป.5/1</option><option>ป.5/2</option>
+                    </select>
+                    <select id="subSel"><option>วิทยาการคำนวณ</option><option>คอมพิวเตอร์เพิ่มเติม</option></select>
+                    <select id="periodSel"><option value="1">คาบที่ 1</option><option value="2">คาบที่ 2</option><option value="3">คาบที่ 3</option></select>
+                    
+                    <hr style="border:0; border-top:1px dashed #ddd; margin:15px 0;">
+                    <button onclick="app.startAttendance()">📸 เริ่มโหมดแสกนหน้าเข้าเรียน</button>
+                    <button class="btn-dark" onclick="app.openEnrollment()">👤 เพิ่ม/อัปเดตใบหน้าลงระบบ</button>
+                    <button class="btn-outline" onclick="location.reload()" style="margin-top: 15px;">ออกจากระบบ</button>
                 </div>
-                <div id="status-msg">🔍 กำลังเตรียมระบบ AI...</div>
-                <button class="btn-outline" onclick="app.closeScanner()">❌ ปิดกล้อง / ย้อนกลับ</button>
+
+                <div id="video-wrap" class="hidden">
+                    <h3 id="camTitle" style="font-size: 16px;">โหมด AI สแกนใบหน้า</h3>
+                    <div id="video-container"><video id="video" autoplay muted playsinline></video></div>
+                    <div id="status-msg">กำลังเปิดกล้อง...</div>
+                    <button class="btn-outline" onclick="app.closeScanner()">❌ ปิดกล้อง / ย้อนกลับ</button>
+                </div>
             </div>
 
-            <div id="table-wrap" class="hidden">
-                <table id="studentTable">
-                    <thead><tr><th>รายชื่อ</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
-                    <tbody id="studentBody"></tbody>
-                </table>
+            <div class="card" id="rightPanel" class="hidden">
+                <h3 style="text-align: left; margin-bottom: 15px;">📋 รายชื่อนักเรียน <span id="roomTitle"></span></h3>
+                <div class="table-wrap">
+                    <table id="studentTable">
+                        <thead><tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+                        <tbody id="studentBody"><tr><td colspan="4" style="text-align:center;">กรุณาเลือกห้องเรียน</td></tr></tbody>
+                    </table>
+                </div>
                 
                 <div class="log-box">
-                    <div style="font-weight: bold; color: #dc3545;">📋 บันทึกแล้ววันนี้:</div>
-                    <div id="liveLogs"></div>
+                    <strong>บันทึกล่าสุด:</strong>
+                    <div id="liveLogs" style="color: #666; margin-top: 5px;">ยังไม่มีข้อมูลในคาบนี้</div>
                 </div>
             </div>
         </div>
@@ -142,13 +107,12 @@
 </div>
 
 <script>
-    // ⚠️ อย่าลืมใส่ URL ของ GAS ของคุณครูตรงนี้ครับ ⚠️
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzSNAPOMILsT6Bkqgqu6bb2uzzg1e25_kN3ZgLy0U1FltDLRDi3xVweaWsPNBblN_SAMA/exec"; 
-    
+    // ⚠️ นำ URL ของ Web App มาวางที่นี่ ⚠️
+    const API_URL = "https://script.google.com/macros/s/AKfycbzVFbVZFhhF4qiInG9qD7hhxEwMsSM31ZPjh1ix2wQvb1y9jiYfzjFDt3bZE6sIzlzS0Q/exec"; 
     const MODELS_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
     
     let cameraStream, scanInterval, faceMatcher, allUsersRaw = [];
-    let checkedInUsers = new Set(); 
+    let checkedInUsers = new Set(); // ป้องกันเช็คชื่อซ้ำ
 
     const app = {
         init: async () => {
@@ -158,16 +122,18 @@
                 faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL)
             ]);
             try {
-                const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "getAllUsers" }) }).then(r => r.json());
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "getAllUsers" }) }).then(r => r.json());
                 if(res.status === "success" && res.data.length > 0) {
                     allUsersRaw = res.data;
+                    // สร้าง AI Model โดยผูก ID ของผู้ใช้เข้ากับใบหน้า (ความแม่นยำ 0.45)
                     faceMatcher = new faceapi.FaceMatcher(allUsersRaw.map(u => 
-                        new faceapi.LabeledFaceDescriptors(u.id, [new Float32Array(u.face)])
+                        new faceapi.LabeledFaceDescriptors(u.id, [new Float32Array(u.f)])
                     ), 0.45); 
                 }
-            } catch(e) { console.log("โหลดฐานข้อมูลไม่สำเร็จ"); }
+            } catch(e) { console.error("โหลดฐานข้อมูลไม่สำเร็จ"); }
         },
 
+        // --- ระบบ Login ---
         startFaceLogin: async () => {
             alert("มองกล้อง 3 วินาที เพื่อเข้าสู่ระบบ");
             try {
@@ -180,34 +146,29 @@
                         const match = faceMatcher.findBestMatch(det.descriptor);
                         const user = allUsersRaw.find(u => u.id === match.label);
                         
-                        if(user && (user.role === 'admin' || user.role === 'teacher' || user.r === 'admin' || user.r === 'teacher')) {
-                            app.onLoginSuccess({ id: user.id, name: user.name || user.n, role: user.role || user.r, room: user.room || user.rm });
-                        } else {
-                            alert("ไม่พบสิทธิ์การเข้าใช้งาน หรือใบหน้าไม่ตรง");
-                        }
-                    } else { alert("สแกนไม่สำเร็จ กรุณาใช้รหัสผ่าน"); }
+                        if(user && (user.r === 'admin' || user.r === 'teacher')) {
+                            app.onLoginSuccess({ id: user.id, name: user.n, role: user.r, room: user.rm });
+                        } else { alert("ไม่พบสิทธิ์ หรือใบหน้าไม่ตรง"); }
+                    } else { alert("แสกนไม่สำเร็จ กรุณาใช้รหัสผ่าน"); }
                     cameraStream.getTracks().forEach(t => t.stop());
                 }, 3000);
             } catch(e) { alert("เปิดกล้องไม่ได้"); }
         },
 
         passLogin: async () => {
-            const u = document.getElementById('user').value;
-            const p = document.getElementById('pass').value;
+            const u = document.getElementById('user').value, p = document.getElementById('pass').value;
             if(!u || !p) return alert("กรุณากรอกข้อมูล");
             
-            document.querySelector('.btn-red').innerText = "กำลังตรวจสอบ...";
-            const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "login", username: u, password: p }) }).then(r => r.json());
-            if(res.status === "success") { app.onLoginSuccess(res.user); } 
-            else { alert(res.message); document.querySelector('.btn-red').innerText = "เข้าสู่ระบบด้วยรหัสผ่าน"; }
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "login", username: u, password: p }) }).then(r => r.json());
+            if(res.status === "success") app.onLoginSuccess(res.user); 
+            else alert(res.message);
         },
 
         onLoginSuccess: (user) => {
             window.me = user;
             document.getElementById('loginView').classList.add('hidden');
             document.getElementById('mainView').classList.remove('hidden');
-            document.getElementById('welcome').innerText = `สวัสดีครู: ${user.name}`;
-            
+            document.getElementById('welcome').innerText = `สวัสดีคุณครู ${user.name}`;
             if(user.room && user.room !== '-') {
                 document.getElementById('roomSel').value = user.room;
                 document.getElementById('roomSel').disabled = true;
@@ -215,68 +176,69 @@
             }
         },
 
+        // --- โหลดรายชื่อเด็ก ---
         loadClassroom: () => {
             const room = document.getElementById('roomSel').value;
-            if(!room) return document.getElementById('table-wrap').classList.add('hidden');
+            if(!room) return;
+            document.getElementById('roomTitle').innerText = `(${room})`;
             
-            window.currentClassroom = allUsersRaw.filter(u => (u.room || u.rm) === room && (u.role || u.r) === 'student');
+            window.currentClassroom = allUsersRaw.filter(u => u.rm === room && u.r === 'student');
             const tbody = document.getElementById('studentBody');
             tbody.innerHTML = window.currentClassroom.map(s => `
                 <tr>
-                    <td>👤 ${s.name || s.n}</td>
-                    <td id="stat-${s.id}" class="status-รอ">รอเช็ค</td>
+                    <td>${s.id}</td>
+                    <td>${s.n}</td>
+                    <td id="stat-${s.id}" style="color:#666;">รอเช็ค</td>
                     <td>
-                        <button onclick="app.manualMark('${s.id}','${s.name || s.n}','ลา')" style="background:#007bff; color:white">ลา</button>
-                        <button onclick="app.manualMark('${s.id}','${s.name || s.n}','สาย')" style="background:#ffc107;">สาย</button>
+                        <button class="btn-small" style="background:#0dcaf0;" onclick="app.manualMark('${s.id}','${s.n}','ลา')">ลา</button>
+                        <button class="btn-small" style="background:#ffc107; color:black;" onclick="app.manualMark('${s.id}','${s.n}','สาย')">สาย</button>
                     </td>
                 </tr>
             `).join('');
-            document.getElementById('table-wrap').classList.remove('hidden');
         },
 
-        // 🔴 ฟังก์ชันเพิ่มใบหน้าเข้าสู่ระบบ 🔴
+        // --- โหมด 1: บันทึกใบหน้าใหม่ (Enrollment) ---
         openEnrollment: async () => {
-            const id = prompt("กรุณาระบุรหัสประจำตัว (ที่มีในชีต Users) เพื่อบันทึกใบหน้า:");
+            const id = prompt("ระบุ รหัสประจำตัว (Username) ที่มีในชีต Users เพื่อบันทึกหน้า:");
             if(!id) return;
-            window.enrollId = id;
-            window.isRegisterMode = true;
+            window.enrollId = id; window.isRegisterMode = true;
 
             document.getElementById('setupClass').classList.add('hidden');
-            document.getElementById('table-wrap').classList.add('hidden');
             document.getElementById('video-wrap').classList.remove('hidden');
-            document.getElementById('camTitle').innerText = `บันทึกใบหน้า: รหัส ${id}`;
-            document.getElementById('status-msg').innerText = "มองกล้องให้ชัดเจน...";
-
-            try {
-                cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                document.getElementById('video').srcObject = cameraStream;
-                document.getElementById('video').onplay = app.processDetection;
-            } catch(e) { alert("เปิดกล้องไม่ได้"); app.closeScanner(); }
+            document.getElementById('camTitle').innerText = `กำลังบันทึกใบหน้า: รหัส ${id}`;
+            document.getElementById('status-msg').innerText = "มองกล้องให้ชัดเจน และนิ่งสักครู่...";
+            app.startCamera();
         },
 
+        // --- โหมด 2: เช็คชื่อเข้าเรียน (Attendance) ---
         startAttendance: async () => {
-            const room = document.getElementById('roomSel').value;
-            if(!room) return alert("กรุณาเลือกห้องเรียนก่อน");
+            if(!document.getElementById('roomSel').value) return alert("เลือกห้องเรียนก่อนครับ");
             window.isRegisterMode = false;
 
             document.getElementById('setupClass').classList.add('hidden');
             document.getElementById('video-wrap').classList.remove('hidden');
             document.getElementById('camTitle').innerText = "โหมด AI เช็คชื่อเข้าเรียน";
-            document.getElementById('status-msg').innerText = "✅ พร้อมแสกนหน้าครับ";
+            document.getElementById('status-msg').innerText = "✅ พร้อมสแกนหน้าครับ";
+            app.startCamera();
+        },
 
+        startCamera: async () => {
             try {
                 cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                document.getElementById('video').srcObject = cameraStream;
-                document.getElementById('video').onplay = app.processDetection;
+                const v = document.getElementById('video');
+                v.srcObject = cameraStream;
+                v.onplay = app.processDetection;
             } catch(e) { alert("เปิดกล้องไม่ได้"); app.closeScanner(); }
         },
 
+        // --- ประมวลผล AI ---
         processDetection: () => {
             const v = document.getElementById('video');
             const container = document.getElementById('video-container');
             const canvas = faceapi.createCanvasFromMedia(v);
             container.append(canvas);
-            faceapi.matchDimensions(canvas, { width: v.clientWidth, height: v.clientHeight });
+            const size = { width: v.clientWidth, height: v.clientHeight };
+            faceapi.matchDimensions(canvas, size);
 
             let isProcessing = false;
 
@@ -286,52 +248,48 @@
                 
                 if(detect) {
                     canvas.getContext('2d').clearRect(0,0, canvas.width, canvas.height);
-                    faceapi.draw.drawDetections(canvas, faceapi.resizeResults(detect, { width: v.clientWidth, height: v.clientHeight }));
+                    faceapi.draw.drawDetections(canvas, faceapi.resizeResults(detect, size));
 
-                    // 🔴 กรณีโหมดเพิ่มใบหน้า (Enrollment)
+                    // กรณี: บันทึกหน้าใหม่
                     if(window.isRegisterMode) {
                         isProcessing = true;
-                        document.getElementById('status-msg').innerText = "⏳ กำลังบันทึกข้อมูลลง Google Sheets...";
-                        const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ 
-                            action: "saveFace", username: window.enrollId, descriptor: Array.from(detect.descriptor) 
-                        })}).then(r => r.json());
-                        
-                        if(res.status === "success") { alert("บันทึกใบหน้าสำเร็จ!"); location.reload(); } 
-                        else { alert(res.message); app.closeScanner(); }
-                        return;
+                        document.getElementById('status-msg').innerText = "⏳ กำลังส่งข้อมูลขึ้น Google Sheets...";
+                        const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "saveFace", username: window.enrollId, descriptor: Array.from(detect.descriptor) })}).then(r => r.json());
+                        alert(res.message); 
+                        location.reload(); return;
                     }
 
-                    // 🔴 กรณีโหมดเช็คชื่อ (Attendance)
+                    // กรณี: เช็คชื่อ
                     if(faceMatcher && window.currentClassroom) {
                         const match = faceMatcher.findBestMatch(detect.descriptor);
-                        const userMatch = allUsersRaw.find(u => u.id === match.label);
+                        const matchedId = match.label;
 
-                        if(userMatch) {
-                            const name = userMatch.name || userMatch.n;
-                            const student = window.currentClassroom.find(s => s.id === userMatch.id);
-                            if(!student) return; 
-
-                            if(checkedInUsers.has(name)) {
-                                document.getElementById('status-msg').innerText = `👌 ${name} เช็คไปแล้ว`;
+                        // ค้นหาว่ารหัสที่เจอ เป็นเด็กในห้องที่เลือกอยู่หรือไม่
+                        const student = window.currentClassroom.find(s => s.id === matchedId);
+                        
+                        if(student) {
+                            if(checkedInUsers.has(student.id)) {
+                                document.getElementById('status-msg').innerText = `👌 ${student.n} เช็คไปแล้ว`;
                                 return;
                             }
 
                             isProcessing = true; 
-                            document.getElementById('status-msg').innerText = `✨ บันทึก: ${name}...`;
+                            document.getElementById('status-msg').innerText = `✨ พบใบหน้า: ${student.n}...`;
 
-                            const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ 
-                                action: "markAttendance", studentId: student.id, studentName: name,
+                            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ 
+                                action: "markAttendance", studentId: student.id, studentName: student.n,
                                 subject: document.getElementById('subSel').value, period: document.getElementById('periodSel').value,
                                 status: "มา", teacherId: window.me.id
                             })}).then(r => r.json());
 
                             if(res.status === "success") {
-                                checkedInUsers.add(name); 
-                                app.updateLog(name, "มา"); 
-                                document.getElementById(`stat-${student.id}`).innerText = "มา";
-                                document.getElementById(`stat-${student.id}`).className = "status-มา";
-                                document.getElementById('status-msg').innerText = `✅ บันทึก ${name} สำเร็จ`;
-                                setTimeout(() => { isProcessing = false; document.getElementById('status-msg').innerText = "🔍 พร้อมแสกนคนต่อไป..."; }, 3000);
+                                checkedInUsers.add(student.id);
+                                app.updateLog(student.n, "มา");
+                                const td = document.getElementById(`stat-${student.id}`);
+                                td.innerText = "มา"; td.className = "status-มา";
+                                
+                                document.getElementById('status-msg').innerText = `✅ บันทึก ${student.n} สำเร็จ`;
+                                setTimeout(() => { isProcessing = false; document.getElementById('status-msg').innerText = "🔍 พร้อมสแกนคนต่อไป..."; }, 3000);
                             } else { isProcessing = false; }
                         }
                     }
@@ -339,19 +297,24 @@
             }, 800);
         },
 
-        manualMark: async (id, name, status) => {
-            if(checkedInUsers.has(name)) return alert("เช็คชื่อไปแล้ว");
+        // --- กดจัดการเอง (Manual) ---
+        manualMark: (id, name, status) => {
+            if(checkedInUsers.has(id)) return alert("นักเรียนคนนี้เช็คสถานะไปแล้ว");
+            
             document.getElementById(`stat-${id}`).innerText = status;
             document.getElementById(`stat-${id}`).className = `status-${status}`;
-            checkedInUsers.add(name); 
+            checkedInUsers.add(id);
             app.updateLog(name, status);
-            fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "markAttendance", studentId: id, studentName: name, subject: document.getElementById('subSel').value, period: document.getElementById('periodSel').value, status: status, teacherId: window.me.id })});
+            
+            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "markAttendance", studentId: id, studentName: name, subject: document.getElementById('subSel').value, period: document.getElementById('periodSel').value, status: status, teacherId: window.me.id })});
         },
 
         updateLog: (name, status) => {
-            const logBox = document.getElementById('liveLogs');
             const timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-            logBox.innerHTML = `<div>👤 ${name} - <b>${status}</b> <span style="color:#aaa;font-size:12px;">(${timeStr})</span></div>` + logBox.innerHTML;
+            const logHTML = `<div><b>${name}</b> - ${status} <span style="color:#aaa;font-size:12px;">(${timeStr})</span></div>`;
+            const box = document.getElementById('liveLogs');
+            if(box.innerText === "ยังไม่มีข้อมูลในคาบนี้") box.innerHTML = logHTML;
+            else box.innerHTML = logHTML + box.innerHTML;
         },
 
         closeScanner: () => {
@@ -360,9 +323,9 @@
             document.querySelectorAll('canvas').forEach(c => c.remove());
             document.getElementById('video-wrap').classList.add('hidden');
             document.getElementById('setupClass').classList.remove('hidden');
-            if(!window.isRegisterMode) document.getElementById('table-wrap').classList.remove('hidden');
         }
     };
+    
     app.init(); 
 </script>
 </body>
