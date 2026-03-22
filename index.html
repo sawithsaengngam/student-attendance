@@ -1,70 +1,175 @@
-<button onclick="app.openEnrollment()" style="background: #6f42c1; color: white; margin-top: 10px;">👤 ลงทะเบียนใบหน้านักเรียนใหม่</button>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบเช็คเวลาเรียน มล.อุปถัมภ์ไทยคีรี</title>
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background: #e9ecef; margin: 0; padding: 15px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
+    .card { background: white; width: 100%; max-width: 450px; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); box-sizing: border-box; }
+    h2 { color: #333; margin-top: 0; margin-bottom: 20px; }
+    input, select, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ced4da; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
+    button { background: #0d6efd; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    button:hover { opacity: 0.9; }
+    .btn-success { background: #198754; }
+    .btn-purple { background: #6f42c1; }
+    .btn-warning { background: #ffc107; color: black; }
+    .btn-danger { background: #dc3545; }
+    .hidden { display: none; }
+    #video-container { position: relative; width: 100%; display: flex; justify-content: center; margin-top: 15px; background: #000; border-radius: 8px; overflow: hidden; min-height: 300px; }
+    video { width: 100%; height: auto; display: block; }
+    canvas { position: absolute; top: 0; left: 0; }
+    #log { margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 14px; color: #555; text-align: left; max-height: 100px; overflow-y: auto;}
+  </style>
+</head>
+<body>
 
-<script>
-  // เพิ่มฟังก์ชันเหล่านี้ในส่วนของ app = { ... }
-  
-  // 1. เปิดหน้าลงทะเบียน
-  openEnrollment: async () => {
-    const studentId = prompt("กรุณาระบุรหัสนักเรียนที่จะลงทะเบียน:");
-    const studentName = prompt("กรุณาระบุชื่อ-นามสกุลนักเรียน:");
-    if(!studentId || !studentName) return;
+  <div id="loginSection" class="card">
+    <h2 style="color: #0d6efd;">ครูเข้าสู่ระบบ</h2>
+    <input type="text" id="loginUser" placeholder="รหัสประจำตัวครู">
+    <input type="password" id="loginPass" placeholder="รหัสผ่าน">
+    <button onclick="app.login()" id="loginBtn">เข้าสู่ระบบ</button>
+    <p id="loginMsg" style="color: red; font-size: 14px;"></p>
+  </div>
 
-    app.currentEnrollData = { id: studentId, name: studentName };
-    document.getElementById('teacherSection').classList.add('hidden');
-    document.getElementById('scannerSection').classList.remove('hidden');
-    document.getElementById('scanStatus').innerText = "กำลังเตรียมระบบลงทะเบียน...";
+  <div id="teacherSection" class="card hidden">
+    <h2 id="welcomeText">ยินดีต้อนรับ</h2>
+    <div style="text-align: left; margin-bottom: 15px;">
+      <label>เลือกวิชา:</label>
+      <select id="subjectSelect">
+        <option value="วิทยาการคำนวณ">วิทยาการคำนวณ</option>
+        <option value="คอมพิวเตอร์เพิ่มเติม">คอมพิวเตอร์เพิ่มเติม</option>
+      </select>
+      <label>เลือกคาบเรียน:</label>
+      <select id="periodSelect">
+        <option value="1">คาบที่ 1</option><option value="2">คาบที่ 2</option>
+        <option value="3">คาบที่ 3</option><option value="4">คาบที่ 4</option>
+      </select>
+    </div>
+    <button onclick="app.openScanner()" class="btn-success">📸 เปิดกล้องเช็คชื่อรายวิชา</button>
+    <button onclick="app.openEnrollment()" class="btn-purple" style="margin-top: 10px;">👤 ลงทะเบียนใบหน้านักเรียนใหม่</button>
+    <button onclick="app.logout()" class="btn-danger" style="margin-top: 25px;">ออกจากระบบ</button>
+  </div>
+
+  <div id="scannerSection" class="card hidden">
+    <h2 id="scanTitle">ระบบ AI</h2>
+    <p id="scanStatus" style="font-weight: bold; color: #0d6efd;">กำลังโหลดระบบ...</p>
+    <div id="video-container">
+      <video id="video" width="400" height="300" autoplay muted playsinline></video>
+    </div>
+    <div id="log">ระบบพร้อมทำงาน...</div>
+    <button onclick="app.closeScanner()" class="btn-danger" style="margin-top: 15px;">ปิดกล้อง/ย้อนกลับ</button>
+  </div>
+
+  <script>
+    // ⚠️ แก้ไข URL ตรงนี้ให้เป็นของคุณครู ⚠️
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyiCcCx8nW60UEO0lDiSp_4x0D273Barl-LHXguUith61kFH3NvzdQ4LQYOnz6KcJd5pw/exec"; 
     
-    // เรียกใช้กล้อง (ใช้ฟังก์ชันเดิมที่เขียนไว้)
-    await app.initCameraForEnroll();
-  },
+    const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+    let currentUser = null;
+    let cameraStream = null;
+    let scanInterval = null;
+    let isRegisterMode = false;
+    let enrollData = { id: '', name: '' };
 
-  // 2. ฟังก์ชันพิเศษสำหรับแอบเก็บ Descriptor ตอนลงทะเบียน
-  initCameraForEnroll: async () => {
-    await Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-      faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-      faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL) // เพิ่มตัวนี้เพื่อจำหน้า
-    ]);
-    
-    const video = document.getElementById('video');
-    cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
-    video.srcObject = cameraStream;
-    
-    video.onplay = () => {
-      const canvas = faceapi.createCanvasFromMedia(video);
-      document.getElementById('video-container').append(canvas);
-      const displaySize = { width: video.width, height: video.height };
-      faceapi.matchDimensions(canvas, displaySize);
+    const app = {
+      login: async () => {
+        const u = document.getElementById('loginUser').value;
+        const p = document.getElementById('loginPass').value;
+        if(!u || !p) return;
+        document.getElementById('loginBtn').innerText = "กำลังตรวจสอบ...";
+        try {
+          const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "login", username: u, password: p }) });
+          const data = await res.json();
+          if (data.status === "success") {
+            currentUser = data.user;
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('teacherSection').classList.remove('hidden');
+            document.getElementById('welcomeText').innerText = "ครู" + currentUser.name;
+          } else { alert(data.message); }
+        } catch (e) { alert("เชื่อมต่อผิดพลาด"); }
+        document.getElementById('loginBtn').innerText = "เข้าสู่ระบบ";
+      },
 
-      let isDone = false;
-      const interval = setInterval(async () => {
-        if(isDone) return;
-        
-        // สแกนเพื่อหาค่า Descriptor (ลายนิ้วมือใบหน้า)
-        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-                                       .withFaceLandmarks()
-                                       .withFaceDescriptor();
-        
-        if (detection) {
-          isDone = true;
-          clearInterval(interval);
-          document.getElementById('scanStatus').innerText = "⏳ กำลังส่งข้อมูลใบหน้าเข้าฐานข้อมูล...";
+      logout: () => { location.reload(); },
+
+      openEnrollment: () => {
+        const id = prompt("รหัสนักเรียน:");
+        const name = prompt("ชื่อ-นามสกุล:");
+        if(!id || !name) return;
+        enrollData = { id, name };
+        isRegisterMode = true;
+        document.getElementById('scanTitle').innerText = "ลงทะเบียนใบหน้า";
+        app.startCamera();
+      },
+
+      openScanner: () => {
+        isRegisterMode = false;
+        document.getElementById('scanTitle').innerText = "เช็คชื่อรายวิชา";
+        app.startCamera();
+      },
+
+      startCamera: async () => {
+        document.getElementById('teacherSection').classList.add('hidden');
+        document.getElementById('scannerSection').classList.remove('hidden');
+        try {
+          await Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+          ]);
+          cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          const v = document.getElementById('video');
+          v.srcObject = cameraStream;
+          v.onplay = app.processDetection;
+          document.getElementById('scanStatus').innerText = "✅ พร้อมทำงาน";
+        } catch (e) { alert("กล้องขัดข้อง"); app.closeScanner(); }
+      },
+
+      processDetection: () => {
+        const v = document.getElementById('video');
+        const container = document.getElementById('video-container');
+        const canvas = faceapi.createCanvasFromMedia(v);
+        container.append(canvas);
+        const size = { width: v.clientWidth, height: v.clientHeight };
+        faceapi.matchDimensions(canvas, size);
+
+        let processing = false;
+        scanInterval = setInterval(async () => {
+          if(processing) return;
+          const detect = await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
           
-          // ส่งไปเซฟที่ Google Sheets
-          const res = await fetch(https://script.google.com/macros/s/AKfycbyiCcCx8nW60UEO0lDiSp_4x0D273Barl-LHXguUith61kFH3NvzdQ4LQYOnz6KcJd5pw/exec, {
-            method: 'POST',
-            body: JSON.stringify({
-              action: "registerFace",
-              username: app.currentEnrollData.id,
-              name: app.currentEnrollData.name,
-              descriptor: Array.from(detection.descriptor) // ส่งค่าตัวเลขใบหน้าไป
-            })
-          });
-          const result = await res.json();
-          alert(result.message);
-          app.closeScanner();
-        }
-      }, 500);
+          if(detect){
+            canvas.getContext('2d').clearRect(0,0, canvas.width, canvas.height);
+            faceapi.draw.drawDetections(canvas, faceapi.resizeResults(detect, size));
+
+            if(isRegisterMode){
+              processing = true;
+              document.getElementById('scanStatus').innerText = "⌛ กำลังบันทึกใบหน้า...";
+              await app.apiCall({ action: "registerFace", username: enrollData.id, name: enrollData.name, descriptor: Array.from(detect.descriptor) });
+              alert("ลงทะเบียนเรียบร้อย!");
+              app.closeScanner();
+            } else {
+              // ในเวอร์ชันถัดไปเราจะเอา descriptor ไปเปรียบเทียบ (Matching)
+              document.getElementById('log').innerText = "พบใบหน้าคน! (ระบบ Matching กำลังตามมา)";
+            }
+          }
+        }, 500);
+      },
+
+      apiCall: async (payload) => {
+        return await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify(payload) }).then(r => r.json());
+      },
+
+      closeScanner: () => {
+        clearInterval(scanInterval);
+        if(cameraStream) cameraStream.getTracks().forEach(t => t.stop());
+        document.querySelectorAll('canvas').forEach(c => c.remove());
+        document.getElementById('scannerSection').classList.add('hidden');
+        document.getElementById('teacherSection').classList.remove('hidden');
+      }
     };
-  }
-</script>
+  </script>
+</body>
+</html>
