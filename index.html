@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบเช็คเวลาเรียน AI</title>
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background: #e9ecef; margin: 0; padding: 15px; text-align: center; }
+    .card { background: white; max-width: 450px; margin: 20px auto; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    h2 { color: #333; margin-top: 0; }
+    input, select, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ced4da; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
+    button { background: #0d6efd; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    button:hover { background: #0b5ed7; }
+    .btn-danger { background: #dc3545; }
+    .btn-success { background: #198754; }
+    .hidden { display: none; }
+    /* ส่วนของกล้อง */
+    #video-container { position: relative; display: flex; justify-content: center; margin-top: 15px; }
+    video { border-radius: 8px; width: 100%; max-width: 400px; background: #000; }
+    canvas { position: absolute; top: 0; left: 0; border-radius: 8px; }
+    #log { margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 14px; color: #555; text-align: left;}
+  </style>
+</head>
+<body>
+
+  <div id="loginSection" class="card">
+    <h2>เข้าสู่ระบบ</h2>
+    <input type="text" id="loginUser" placeholder="รหัสประจำตัวครู/นักเรียน">
+    <input type="password" id="loginPass" placeholder="รหัสผ่าน">
+    <button onclick="app.login()" id="loginBtn">เข้าสู่ระบบ</button>
+    <p id="loginMsg" style="color: red; font-size: 14px;"></p>
+  </div>
+
+  <div id="teacherSection" class="card hidden">
+    <h2 id="welcomeText">ยินดีต้อนรับ ครู</h2>
+    
+    <div style="text-align: left; margin-bottom: 15px;">
+      <label>เลือกรายวิชา:</label>
+      <select id="subjectSelect">
+        <option value="วิทยาการคำนวณ (ว21103)">วิทยาการคำนวณ (ว21103)</option>
+        <option value="คณิตศาสตร์ (ค21101)">คณิตศาสตร์ (ค21101)</option>
+      </select>
+      <label>เลือกคาบเรียน:</label>
+      <select id="periodSelect">
+        <option value="1">คาบที่ 1</option><option value="2">คาบที่ 2</option>
+      </select>
+    </div>
+
+    <button onclick="app.openScanner()" class="btn-success">📸 เปิดกล้องเช็คชื่อรายวิชา</button>
+    <button onclick="alert('เมนูจัดการรายวันกำลังพัฒนา')" style="background: #ffc107; color: #000;">📝 จัดการสรุปรายวัน (ครูที่ปรึกษา)</button>
+    <button onclick="app.logout()" class="btn-danger" style="margin-top: 20px;">ออกจากระบบ</button>
+  </div>
+
+  <div id="scannerSection" class="card hidden">
+    <h2>ระบบสแกนใบหน้า</h2>
+    <p id="scanStatus" style="color: #0d6efd; font-weight: bold;">กำลังโหลด AI...</p>
+    
+    <div id="video-container">
+      <video id="video" width="400" height="300" autoplay muted playsinline></video>
+    </div>
+    
+    <div id="log">รอการแสกน...</div>
+    <button onclick="app.closeScanner()" class="btn-danger" style="margin-top: 15px;">ยกเลิก / ปิดกล้อง</button>
+  </div>
+
+  <script>
+    // ========================================================
+    // 🔴 นำ URL ของ Web App จาก Google Apps Script มาใส่ตรงนี้ 🔴
+    // ========================================================
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzzRhjXFcZ7FV7fHytvwbxqmU5eWeMFH5oFAW-plyVvxAocUHQ0C1TVZYVQsfBDRFKMlQ/exec"; 
+    
+    const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+    let currentUser = null;
+    let cameraStream = null;
+    let faceDetectionInterval = null;
+
+    const app = {
+      // 1. ระบบ Login
+      login: async () => {
+        const user = document.getElementById('loginUser').value;
+        const pass = document.getElementById('loginPass').value;
+        const msg = document.getElementById('loginMsg');
+        const btn = document.getElementById('loginBtn');
+        
+        if(!user || !pass) return msg.innerText = "กรุณากรอกข้อมูลให้ครบ";
+        if(!GAS_API_URL || GAS_API_URL.includes("ใส่_URL")) return msg.innerText = "กรุณาใส่ URL ของ GAS API ในโค้ดก่อนครับ";
+
+        msg.innerText = "";
+        btn.innerText = "กำลังตรวจสอบ...";
+        btn.disabled = true;
+
+        try {
+          // ส่ง POST request ไปที่ Google Apps Script
+          const response = await fetch(GAS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: "login", username: user, password: pass })
+          });
+          
+          const result = await response.json();
+
+          if (result.status === "success") {
+            currentUser = result.user; // เก็บข้อมูลผู้ใช้ที่ล็อกอิน
+            document.getElementById('loginSection').classList.add('hidden');
+            
+            if (currentUser.role === "Teacher" || currentUser.role === "Admin") {
+              document.getElementById('teacherSection').classList.remove('hidden');
+              document.getElementById('welcomeText').innerText = `ยินดีต้อนรับ ครู${currentUser.name}`;
+            } else {
+              alert("ระบบของนักเรียนกำลังอยู่ระหว่างพัฒนาครับ");
+              app.logout();
+            }
+          } else {
+            msg.innerText = result.message;
+          }
+        } catch (err) {
+          msg.innerText = "เชื่อมต่อฐานข้อมูลล้มเหลว ตรวจสอบอินเทอร์เน็ตหรือ URL";
+        }
+        btn.innerText = "เข้าสู่ระบบ";
+        btn.disabled = false;
+      },
+
+      // 2. ออกจากระบบ
+      logout: () => {
+        currentUser = null;
+        document.getElementById('loginUser').value = "";
+        document.getElementById('loginPass').value = "";
+        document.getElementById('teacherSection').classList.add('hidden');
+        document.getElementById('loginSection').classList.remove('hidden');
+      },
+
+      // 3. เปิดกล้องและโหลด AI
+      openScanner: async () => {
+        document.getElementById('teacherSection').classList.add('hidden');
+        document.getElementById('scannerSection').classList.remove('hidden');
+        
+        try {
+          // โหลด AI Models
+          await Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL)
+          ]);
+          document.getElementById('scanStatus').innerText = "กำลังเปิดกล้อง...";
+
+          // เปิดกล้อง
+          const video = document.getElementById('video');
+          cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+          video.srcObject = cameraStream;
+          
+          document.getElementById('scanStatus').innerText = "✅ หันหน้าเข้ากล้องเพื่อเช็คชื่อ";
+          
+          // เมื่อกล้องพร้อม ให้เริ่มสแกน
+          video.addEventListener('play', app.detectFace);
+
+        } catch (err) {
+          alert("ไม่สามารถเปิดกล้องได้ หรือโหลด AI ไม่สำเร็จ");
+          app.closeScanner();
+        }
+      },
+
+      // 4. กระบวนการสแกนใบหน้าและส่งข้อมูล
+      detectFace: () => {
+        const video = document.getElementById('video');
+        const canvas = faceapi.createCanvasFromMedia(video);
+        document.getElementById('video-container').append(canvas);
+        const displaySize = { width: video.width, height: video.height };
+        faceapi.matchDimensions(canvas, displaySize);
+
+        let isScanning = true;
+
+        faceDetectionInterval = setInterval(async () => {
+          if(!isScanning) return; // ถ้าส่งข้อมูลอยู่ ให้หยุดสแกนชั่วคราว
+
+          const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
+          const resizedDetections = faceapi.resizeResults(detections, displaySize);
+          
+          // วาดกรอบ
+          canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+          faceapi.draw.drawDetections(canvas, resizedDetections);
+          faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+
+          // ถ้าเจอใบหน้าคน (ในระบบจริงตรงนี้จะเอา Face Descriptor ไปเทียบฐานข้อมูล)
+          // * สำหรับ MVP นี้: แค่เจอหน้า ก็จะจำลองรหัสนักเรียนและส่งไปบันทึกเลย
+          if (detections.length > 0) {
+             isScanning = false; // หยุดสแกนชั่วคราวกันข้อมูลซ้ำ
+             document.getElementById('scanStatus').innerText = "⏳ พบใบหน้า กำลังบันทึกข้อมูล...";
+             document.getElementById('scanStatus').style.color = "orange";
+             
+             // ข้อมูลจำลองนักเรียน (เพราะเรายังไม่ได้ทำระบบลงทะเบียนหน้า)
+             const mockStudentId = "66001"; 
+             const mockStudentName = "ด.ช. สมเกียรติ รักเรียน";
+             
+             await app.sendAttendanceToGAS(mockStudentId, mockStudentName);
+             
+             // หน่วงเวลา 3 วินาทีแล้วให้สแกนคนต่อไป
+             setTimeout(() => {
+                isScanning = true;
+                document.getElementById('scanStatus').innerText = "✅ พร้อมสแกนคนต่อไป";
+                document.getElementById('scanStatus').style.color = "#198754";
+             }, 3000);
+          }
+        }, 300); // เช็คทุกๆ 0.3 วินาที
+      },
+
+      // 5. ส่งข้อมูลบันทึกลง Google Sheet
+      sendAttendanceToGAS: async (studentId, studentName) => {
+        const subject = document.getElementById('subjectSelect').value;
+        const period = document.getElementById('periodSelect').value;
+        
+        try {
+          const response = await fetch(GAS_API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+              action: "markAttendance",
+              studentId: studentId,
+              studentName: studentName,
+              subject: subject,
+              period: period,
+              teacherId: currentUser.id
+            })
+          });
+          const result = await response.json();
+          
+          // แสดงผลลัพธ์ในกรอบ Log
+          const logDiv = document.getElementById('log');
+          logDiv.innerHTML = `<strong>ล่าสุด:</strong> ${result.message} (วิชา: ${subject})<br>` + logDiv.innerHTML;
+          
+        } catch (err) {
+           console.error("บันทึกข้อมูลล้มเหลว");
+        }
+      },
+
+      // 6. ปิดกล้อง
+      closeScanner: () => {
+        clearInterval(faceDetectionInterval);
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(track => track.stop());
+        }
+        // ลบ Canvas เก่าทิ้ง
+        const canvas = document.querySelector('canvas');
+        if(canvas) canvas.remove();
+
+        document.getElementById('scannerSection').classList.add('hidden');
+        document.getElementById('teacherSection').classList.remove('hidden');
+      }
+    };
+  </script>
+</body>
+</html>
