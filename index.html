@@ -3,71 +3,108 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Attendance - มล.อุปถัมภ์ไทยคีรี</title>
+  <title>AI Attendance System - มล.อุปถัมภ์ไทยคีรี</title>
   <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <style>
-    body { font-family: 'Sarabun', sans-serif; background: #f4f7f6; margin: 0; padding: 10px; display: flex; justify-content: center; }
-    .card { background: white; width: 100%; max-width: 400px; padding: 20px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); box-sizing: border-box; text-align: center; }
+    body { font-family: 'Sarabun', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; display: flex; justify-content: center; }
+    .main-container { display: flex; gap: 20px; width: 100%; max-width: 1000px; flex-wrap: wrap; justify-content: center; }
+    .card { background: white; width: 100%; max-width: 420px; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); box-sizing: border-box; }
+    
+    /* 🔴 ส่วนที่เพิ่มใหม่: รายการเช็คชื่อด้านขวา */
+    .log-card { background: white; width: 100%; max-width: 350px; padding: 20px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); min-height: 400px; display: flex; flex-direction: column; }
+    .log-list { list-style: none; padding: 0; margin-top: 10px; flex-grow: 1; overflow-y: auto; max-height: 500px; }
+    .log-item { padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; display: flex; justify-content: space-between; animation: fadeIn 0.5s; }
+    .log-item:first-child { background: #e8f5e9; border-radius: 5px; font-weight: bold; }
+    
+    h2 { color: #0d6efd; margin-top: 0; text-align: center; }
     input, select, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-    button { background: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; }
+    button { background: #0d6efd; color: white; border: none; font-weight: bold; cursor: pointer; }
     .btn-purple { background: #6f42c1; }
-    .btn-success { background: #28a745; }
+    .btn-success { background: #198754; }
     .btn-danger { background: #dc3545; }
-    .hidden { display: none; }
+    .hidden { display: none !important; }
+    
     #video-container { position: relative; width: 100%; background: #000; border-radius: 10px; overflow: hidden; min-height: 300px; }
     video { width: 100%; height: auto; display: block; }
     canvas { position: absolute; top: 0; left: 0; }
-    #log { margin-top: 10px; padding: 12px; border-radius: 8px; font-weight: bold; background: #fff3cd; color: #856404; transition: 0.3s; }
+    #status-msg { margin-top: 10px; padding: 10px; border-radius: 5px; background: #fff3cd; text-align: center; font-weight: bold; }
+    
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 <body>
 
-  <div id="loginSection" class="card">
-    <h2>ครูเข้าสู่ระบบ</h2>
-    <input type="text" id="loginUser" placeholder="รหัสประจำตัวครู">
-    <input type="password" id="loginPass" placeholder="รหัสผ่าน">
-    <button onclick="app.login()" id="loginBtn">เข้าสู่ระบบ</button>
-  </div>
+  <div class="main-container">
+    <div id="mainView" class="card">
+      <div id="loginSection">
+        <h2>ครูเข้าสู่ระบบ</h2>
+        <input type="text" id="loginUser" placeholder="รหัสครู">
+        <input type="password" id="loginPass" placeholder="รหัสผ่าน">
+        <button onclick="app.login()" id="loginBtn">เข้าสู่ระบบ</button>
+      </div>
 
-  <div id="teacherSection" class="card hidden">
-    <h2 id="welcomeText" style="color: #007bff;">สวัสดีครับ</h2>
-    <div style="text-align: left; font-size: 14px;">
-      <label>วิชา:</label>
-      <select id="subjectSelect"><option>วิทยาการคำนวณ</option><option>คอมพิวเตอร์</option></select>
-      <label>คาบ:</label>
-      <select id="periodSelect"><option>1</option><option>2</option><option>3</option><option>4</option></select>
+      <div id="teacherSection" class="hidden">
+        <h2 id="welcomeText" style="font-size: 1.1rem;">ยินดีต้อนรับ</h2>
+        <select id="subjectSelect"><option>วิทยาการคำนวณ</option><option>คอมพิวเตอร์</option></select>
+        <select id="periodSelect"><option>1</option><option>2</option><option>3</option><option>4</option></select>
+        <button onclick="app.openScanner()" class="btn-success">📸 เริ่มเช็คชื่อ AI (Matching)</button>
+        <button onclick="app.openEnrollment()" class="btn-purple">👤 ลงทะเบียนนักเรียนใหม่</button>
+        <button onclick="location.reload()" class="btn-danger" style="margin-top: 20px;">ออกจากระบบ</button>
+      </div>
+
+      <div id="scannerSection" class="hidden">
+        <h2 id="scanTitle" style="font-size: 1.1rem;">ระบบสแกนใบหน้า</h2>
+        <div id="video-container">
+          <video id="video" width="400" height="300" autoplay muted playsinline></video>
+        </div>
+        <div id="status-msg">กำลังเตรียมระบบ...</div>
+        <button onclick="app.closeScanner()" class="btn-danger" style="margin-top: 15px;">ปิดกล้อง</button>
+      </div>
     </div>
-    <button onclick="app.openScanner()" class="btn-success">📸 เริ่มเช็คชื่อ AI</button>
-    <button onclick="app.openEnrollment()" class="btn-purple">👤 ลงทะเบียนนักเรียน</button>
-    <button onclick="location.reload()" class="btn-danger">ออกจากระบบ</button>
-  </div>
 
-  <div id="scannerSection" class="card hidden">
-    <h2 id="scanTitle">AI Scanning</h2>
-    <div id="video-container"><video id="video" width="400" height="300" autoplay muted playsinline></video></div>
-    <div id="log">รอสักครู่...</div>
-    <button onclick="app.closeScanner()" class="btn-danger">ปิดหน้าจอนี้</button>
+    <div id="logView" class="log-card hidden">
+      <h3 style="margin: 0; color: #198754; text-align: center;">📋 รายการเช็คชื่อวันนี้</h3>
+      <div id="countInfo" style="text-align: center; font-size: 13px; color: #666;">บันทึกแล้ว: 0 คน</div>
+      <ul id="attendanceLog" class="log-list">
+        </ul>
+    </div>
   </div>
 
   <script>
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyBlxbAtg3vexJCUBlNUAWfO5_mxsK9YHFMBcLUy-ryMXz_243-xxbRGKj_W4wAQQ2UDA/exec"; 
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyNU21f-YF4aOGSXY1k32jlCeYwAJFiZkJpzW2scHyb3FtKwDJ28UG1ByYFInOlGbs5lg/exec"; 
     const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+    
     let cameraStream, scanInterval, cachedFaceDb, faceMatcher;
+    let checkedInUsers = new Set(); // 🔒 ป้องกันการเช็คซ้ำในหน้านี้
 
     const app = {
       login: async () => {
         const u = document.getElementById('loginUser').value;
         const p = document.getElementById('loginPass').value;
         if(!u || !p) return;
-        document.getElementById('loginBtn').innerText = "กำลังตรวจสอบ...";
+        document.getElementById('loginBtn').innerText = "กำลังเข้าสู่ระบบ...";
         const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "login", username: u, password: p }) }).then(r => r.json());
         if(res.status === "success") {
           window.currentUser = res.user;
           document.getElementById('loginSection').classList.add('hidden');
           document.getElementById('teacherSection').classList.remove('hidden');
-          document.getElementById('welcomeText').innerText = "สวัสดีครู " + res.user.name;
+          document.getElementById('welcomeText').innerText = "ครู: " + res.user.name;
         } else { alert(res.message); }
         document.getElementById('loginBtn').innerText = "เข้าสู่ระบบ";
+      },
+
+      openScanner: async () => {
+        window.isRegisterMode = false;
+        document.getElementById('logView').classList.remove('hidden');
+        if (!cachedFaceDb) {
+            document.getElementById('teacherSection').classList.add('hidden');
+            document.getElementById('scannerSection').classList.remove('hidden');
+            document.getElementById('status-msg').innerText = "⏳ โหลดข้อมูลใบหน้า...";
+            const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "getFaceDatabase" }) }).then(r => r.json());
+            cachedFaceDb = res.data;
+            faceMatcher = new faceapi.FaceMatcher(cachedFaceDb.map(u => new faceapi.LabeledFaceDescriptors(u.n, [new Float32Array(u.d)])), 0.55);
+        }
+        app.startCamera();
       },
 
       openEnrollment: () => {
@@ -78,19 +115,6 @@
         app.startCamera();
       },
 
-      openScanner: async () => {
-        window.isRegisterMode = false;
-        if (!cachedFaceDb) {
-            document.getElementById('teacherSection').classList.add('hidden');
-            document.getElementById('scannerSection').classList.remove('hidden');
-            document.getElementById('log').innerText = "⌛ โหลดฐานข้อมูลใบหน้า...";
-            const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "getFaceDatabase" }) }).then(r => r.json());
-            cachedFaceDb = res.data;
-            faceMatcher = new faceapi.FaceMatcher(cachedFaceDb.map(u => new faceapi.LabeledFaceDescriptors(u.name, [new Float32Array(u.descriptor)])), 0.55);
-        }
-        app.startCamera();
-      },
-
       startCamera: async () => {
         document.getElementById('teacherSection').classList.add('hidden');
         document.getElementById('scannerSection').classList.remove('hidden');
@@ -98,6 +122,7 @@
         cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
         document.getElementById('video').srcObject = cameraStream;
         document.getElementById('video').onplay = app.process;
+        document.getElementById('status-msg').innerText = "🔍 สแกนใบหน้าได้เลย";
       },
 
       process: () => {
@@ -108,11 +133,9 @@
         const size = { width: v.clientWidth, height: v.clientHeight };
         faceapi.matchDimensions(canvas, size);
 
-        let isWorking = false; // ตัวล็อคสำคัญ!
-        document.getElementById('log').innerText = "🔍 สแกนใบหน้าได้เลย";
-
+        let isLocked = false;
         scanInterval = setInterval(async () => {
-          if(isWorking) return;
+          if(isLocked) return;
           const detect = await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions({ inputSize: 160 })).withFaceLandmarks().withFaceDescriptor();
           
           if(detect) {
@@ -120,31 +143,55 @@
             faceapi.draw.drawDetections(canvas, faceapi.resizeResults(detect, size));
 
             if(window.isRegisterMode) {
-              isWorking = true;
-              document.getElementById('log').innerText = "⌛ บันทึกหน้าใหม่...";
+              isLocked = true;
+              document.getElementById('status-msg').innerText = "⌛ บันทึกหน้าใหม่...";
               await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "registerFace", username: window.enrollData.id, name: window.enrollData.name, descriptor: Array.from(detect.descriptor) })});
-              alert("บันทึกหน้าเรียบร้อย!"); location.reload();
+              alert("ลงทะเบียนสำเร็จ!"); location.reload();
             } else {
               const match = faceMatcher.findBestMatch(detect.descriptor);
-              if(match.label !== "unknown") {
-                isWorking = true;
-                const logBox = document.getElementById('log');
-                logBox.innerText = `✨ พบคุณ ${match.label} (บันทึกข้อมูล...)`;
-                logBox.style.background = "#d4edda"; logBox.style.color = "#155724";
+              const name = match.label;
+
+              if(name !== "unknown") {
+                // 🛑 ตรวจสอบว่าเช็คไปหรือยังในเซสชันนี้
+                if(checkedInUsers.has(name)) {
+                  document.getElementById('status-msg').innerText = `👌 ${name} เช็คชื่อไปแล้วครับ`;
+                  return;
+                }
+
+                isLocked = true;
+                const status = document.getElementById('status-msg');
+                status.innerText = `✨ บันทึก: ${name}...`;
+                status.style.background = "#d1e7dd";
 
                 const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ 
-                  action: "markAttendance", studentId: "Auto", studentName: match.label,
+                  action: "markAttendance", studentId: "Auto", studentName: name,
                   subject: document.getElementById('subjectSelect').value, period: document.getElementById('periodSelect').value,
                   teacherId: window.currentUser.id
                 })}).then(r => r.json());
 
-                logBox.innerText = `✅ ${match.label}: ${res.message}`;
-                // รอ 5 วินาทีให้คนเดินออก ก่อนสแกนคนใหม่
-                setTimeout(() => { isWorking = false; logBox.innerText = "🔍 สแกนคนต่อไป..."; logBox.style.background = "#fff3cd"; logBox.style.color = "#856404"; }, 5000);
+                if(res.status === "success" || res.status === "duplicate") {
+                  checkedInUsers.add(name); // จำไว้ว่าคนนี้เช็คแล้ว
+                  app.updateLog(name); // เพิ่มชื่อลงรายการด้านขวา
+                  status.innerText = `✅ บันทึก ${name} สำเร็จ`;
+                  setTimeout(() => { isLocked = false; status.innerText = "🔍 สแกนคนต่อไป..."; status.style.background = "#fff3cd"; }, 4000);
+                }
               }
             }
           }
         }, 800);
+      },
+
+      updateLog: (name) => {
+        const logList = document.getElementById('attendanceLog');
+        const now = new Date();
+        const timeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0') + ":" + now.getSeconds().toString().padStart(2, '0');
+        
+        const li = document.createElement('li');
+        li.className = 'log-item';
+        li.innerHTML = `<span>👤 ${name}</span> <span style="color:#666">${timeStr}</span>`;
+        logList.prepend(li); // เอาชื่อใหม่ขึ้นข้างบนสุด
+        
+        document.getElementById('countInfo').innerText = `บันทึกแล้ว: ${checkedInUsers.size} คน`;
       },
 
       closeScanner: () => {
@@ -153,6 +200,7 @@
         document.querySelectorAll('canvas').forEach(c => c.remove());
         document.getElementById('scannerSection').classList.add('hidden');
         document.getElementById('teacherSection').classList.remove('hidden');
+        document.getElementById('logView').classList.add('hidden');
       }
     };
   </script>
