@@ -3,110 +3,95 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบเช็คเวลาเรียน มล.อุปถัมภ์ไทยคีรี</title>
+  <title>ระบบเช็คชื่อ AI - มล.อุปถัมภ์ไทยคีรี</title>
   <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <style>
-    body { font-family: 'Sarabun', sans-serif; background: #e9ecef; margin: 0; padding: 15px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
-    .card { background: white; width: 100%; max-width: 450px; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); box-sizing: border-box; }
-    h2 { color: #333; margin-top: 0; margin-bottom: 20px; }
-    input, select, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ced4da; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
-    button { background: #0d6efd; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-    button:hover { opacity: 0.9; }
-    .btn-success { background: #198754; }
+    /* CSS ส่วนนี้สำคัญมาก ห้ามก๊อปตกหล่นนะครับ */
+    body { font-family: 'Sarabun', sans-serif; background: #f0f2f5; margin: 0; padding: 10px; display: flex; justify-content: center; }
+    .card { background: white; width: 100%; max-width: 400px; padding: 20px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 20px; box-sizing: border-box; }
+    h2 { color: #0d6efd; margin-bottom: 20px; text-align: center; }
+    input, select, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+    button { background: #0d6efd; color: white; border: none; font-weight: bold; cursor: pointer; }
     .btn-purple { background: #6f42c1; }
-    .btn-warning { background: #ffc107; color: black; }
+    .btn-success { background: #198754; }
     .btn-danger { background: #dc3545; }
     .hidden { display: none; }
-    #video-container { position: relative; width: 100%; display: flex; justify-content: center; margin-top: 15px; background: #000; border-radius: 8px; overflow: hidden; min-height: 300px; }
+    #video-container { position: relative; width: 100%; background: #000; border-radius: 10px; overflow: hidden; min-height: 300px; }
     video { width: 100%; height: auto; display: block; }
     canvas { position: absolute; top: 0; left: 0; }
-    #log { margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 14px; color: #555; text-align: left; max-height: 100px; overflow-y: auto;}
+    #log { margin-top: 10px; font-size: 13px; color: #666; text-align: left; background: #f8f9fa; padding: 10px; border-radius: 5px; }
   </style>
 </head>
 <body>
 
   <div id="loginSection" class="card">
-    <h2 style="color: #0d6efd;">ครูเข้าสู่ระบบ</h2>
-    <input type="text" id="loginUser" placeholder="รหัสประจำตัวครู">
+    <h2>ครูเข้าสู่ระบบ</h2>
+    <input type="text" id="loginUser" placeholder="รหัสครู (เช่น T001)">
     <input type="password" id="loginPass" placeholder="รหัสผ่าน">
     <button onclick="app.login()" id="loginBtn">เข้าสู่ระบบ</button>
-    <p id="loginMsg" style="color: red; font-size: 14px;"></p>
   </div>
 
   <div id="teacherSection" class="card hidden">
     <h2 id="welcomeText">ยินดีต้อนรับ</h2>
-    <div style="text-align: left; margin-bottom: 15px;">
-      <label>เลือกวิชา:</label>
-      <select id="subjectSelect">
-        <option value="วิทยาการคำนวณ">วิทยาการคำนวณ</option>
-        <option value="คอมพิวเตอร์เพิ่มเติม">คอมพิวเตอร์เพิ่มเติม</option>
-      </select>
-      <label>เลือกคาบเรียน:</label>
-      <select id="periodSelect">
-        <option value="1">คาบที่ 1</option><option value="2">คาบที่ 2</option>
-        <option value="3">คาบที่ 3</option><option value="4">คาบที่ 4</option>
-      </select>
-    </div>
-    <button onclick="app.openScanner()" class="btn-success">📸 เปิดกล้องเช็คชื่อรายวิชา</button>
-    <button onclick="app.openEnrollment()" class="btn-purple" style="margin-top: 10px;">👤 ลงทะเบียนใบหน้านักเรียนใหม่</button>
-    <button onclick="app.logout()" class="btn-danger" style="margin-top: 25px;">ออกจากระบบ</button>
+    <label>วิชาที่สอน:</label>
+    <select id="subjectSelect">
+      <option value="วิทยาการคำนวณ">วิทยาการคำนวณ</option>
+      <option value="คอมพิวเตอร์">คอมพิวเตอร์</option>
+    </select>
+    <button onclick="app.openScanner()" class="btn-success">📸 เปิดกล้องเช็คชื่อ</button>
+    <button onclick="app.openEnrollment()" class="btn-purple">👤 ลงทะเบียนนักเรียนใหม่</button>
+    <button onclick="location.reload()" class="btn-danger" style="margin-top: 20px;">ออกจากระบบ</button>
   </div>
 
   <div id="scannerSection" class="card hidden">
     <h2 id="scanTitle">ระบบ AI</h2>
-    <p id="scanStatus" style="font-weight: bold; color: #0d6efd;">กำลังโหลดระบบ...</p>
     <div id="video-container">
       <video id="video" width="400" height="300" autoplay muted playsinline></video>
     </div>
-    <div id="log">ระบบพร้อมทำงาน...</div>
-    <button onclick="app.closeScanner()" class="btn-danger" style="margin-top: 15px;">ปิดกล้อง/ย้อนกลับ</button>
+    <div id="log">สถานะ: กำลังโหลด...</div>
+    <button onclick="app.closeScanner()" class="btn-danger">ปิดกล้อง</button>
   </div>
 
   <script>
-    // ⚠️ แก้ไข URL ตรงนี้ให้เป็นของคุณครู ⚠️
+    // ⚠️ อย่าลืมใส่ URL ของ GAS ของคุณครูตรงนี้ครับ ⚠️
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyiCcCx8nW60UEO0lDiSp_4x0D273Barl-LHXguUith61kFH3NvzdQ4LQYOnz6KcJd5pw/exec"; 
     
     const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-    let currentUser = null;
     let cameraStream = null;
     let scanInterval = null;
-    let isRegisterMode = false;
-    let enrollData = { id: '', name: '' };
 
     const app = {
       login: async () => {
         const u = document.getElementById('loginUser').value;
         const p = document.getElementById('loginPass').value;
-        if(!u || !p) return;
-        document.getElementById('loginBtn').innerText = "กำลังตรวจสอบ...";
+        if(!u || !p) return alert("กรุณากรอกข้อมูล");
+        document.getElementById('loginBtn').innerText = "กำลังเข้าสู่ระบบ...";
         try {
           const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "login", username: u, password: p }) });
           const data = await res.json();
-          if (data.status === "success") {
-            currentUser = data.user;
+          if(data.status === "success") {
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('teacherSection').classList.remove('hidden');
-            document.getElementById('welcomeText').innerText = "ครู" + currentUser.name;
+            document.getElementById('welcomeText').innerText = "สวัสดีครู " + data.user.name;
+            window.currentUser = data.user;
           } else { alert(data.message); }
-        } catch (e) { alert("เชื่อมต่อผิดพลาด"); }
+        } catch(e) { alert("เชื่อมต่อ GAS ไม่ได้ ตรวจสอบ URL API ครับ"); }
         document.getElementById('loginBtn').innerText = "เข้าสู่ระบบ";
       },
-
-      logout: () => { location.reload(); },
 
       openEnrollment: () => {
         const id = prompt("รหัสนักเรียน:");
         const name = prompt("ชื่อ-นามสกุล:");
         if(!id || !name) return;
-        enrollData = { id, name };
-        isRegisterMode = true;
+        window.enrollData = { id, name };
+        window.isRegisterMode = true;
         document.getElementById('scanTitle').innerText = "ลงทะเบียนใบหน้า";
         app.startCamera();
       },
 
       openScanner: () => {
-        isRegisterMode = false;
-        document.getElementById('scanTitle').innerText = "เช็คชื่อรายวิชา";
+        window.isRegisterMode = false;
+        document.getElementById('scanTitle').innerText = "เช็คชื่อเข้าเรียน";
         app.startCamera();
       },
 
@@ -122,12 +107,12 @@
           cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
           const v = document.getElementById('video');
           v.srcObject = cameraStream;
-          v.onplay = app.processDetection;
-          document.getElementById('scanStatus').innerText = "✅ พร้อมทำงาน";
-        } catch (e) { alert("กล้องขัดข้อง"); app.closeScanner(); }
+          document.getElementById('log').innerText = "สแกนใบหน้าได้เลย...";
+          v.onplay = app.process;
+        } catch(e) { alert("เปิดกล้องไม่ได้"); app.closeScanner(); }
       },
 
-      processDetection: () => {
+      process: () => {
         const v = document.getElementById('video');
         const container = document.getElementById('video-container');
         const canvas = faceapi.createCanvasFromMedia(v);
@@ -135,31 +120,31 @@
         const size = { width: v.clientWidth, height: v.clientHeight };
         faceapi.matchDimensions(canvas, size);
 
-        let processing = false;
+        let isWorking = false;
         scanInterval = setInterval(async () => {
-          if(processing) return;
+          if(isWorking) return;
           const detect = await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
           
-          if(detect){
+          if(detect) {
             canvas.getContext('2d').clearRect(0,0, canvas.width, canvas.height);
             faceapi.draw.drawDetections(canvas, faceapi.resizeResults(detect, size));
 
-            if(isRegisterMode){
-              processing = true;
-              document.getElementById('scanStatus').innerText = "⌛ กำลังบันทึกใบหน้า...";
-              await app.apiCall({ action: "registerFace", username: enrollData.id, name: enrollData.name, descriptor: Array.from(detect.descriptor) });
-              alert("ลงทะเบียนเรียบร้อย!");
+            if(window.isRegisterMode) {
+              isWorking = true;
+              document.getElementById('log').innerText = "กำลังบันทึกใบหน้าลง Google Sheet...";
+              const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ 
+                action: "registerFace", 
+                username: window.enrollData.id, 
+                name: window.enrollData.name, 
+                descriptor: Array.from(detect.descriptor) 
+              })});
+              alert("บันทึกหน้าเรียบร้อยครับ!");
               app.closeScanner();
             } else {
-              // ในเวอร์ชันถัดไปเราจะเอา descriptor ไปเปรียบเทียบ (Matching)
-              document.getElementById('log').innerText = "พบใบหน้าคน! (ระบบ Matching กำลังตามมา)";
+              document.getElementById('log').innerText = "พบใบหน้าคน! ระบบกำลังประมวลผล...";
             }
           }
         }, 500);
-      },
-
-      apiCall: async (payload) => {
-        return await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify(payload) }).then(r => r.json());
       },
 
       closeScanner: () => {
