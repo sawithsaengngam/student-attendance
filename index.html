@@ -1,87 +1,89 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Class Attendance - มล.อุปถัมภ์ไทยคีรี (แดง-ขาว)</title>
-  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-  <style>
-    /* 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴 */
-    /* CSS ปรับปรุงใหม่โทนสีแดง-ขาว (Red & White Theme) */
-    /* 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴 */
-    
-    body { font-family: 'Sarabun', sans-serif; background: #f8f9fa; margin: 0; padding: 10px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; color: #333; }
-    
-    .container { width: 100%; max-width: 950px; display: grid; grid-template-columns: 1fr 350px; gap: 20px; flex-wrap: wrap; justify-content: center; }
-    
-    .card { background: white; width: 100%; padding: 25px; border-radius: 15px; box-shadow: 0 8px 20px rgba(220, 53, 69, 0.08); box-sizing: border-box; }
-    
-    h2 { color: #dc3545; margin-bottom: 20px; text-align: center; border-bottom: 2px solid #dc3545; padding-bottom: 10px; }
-    h3 { color: #dc3545; margin-top: 0; text-align: center; font-size: 1.1rem;}
-    
-    input, select, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-    input:focus, select:focus { border-color: #dc3545; outline: none; box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25); }
-    
-    button { background: #dc3545; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
-    button:active { transform: scale(0.98); }
-    button:hover { background: #a71d2a; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Class Attendance - มล.อุปถัมภ์ไทยคีรี (แดง-ขาว)</title>
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <style>
+        /* 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴 */
+        /* CSS ปรับปรุงใหม่: จัดกลางสมบูรณ์ & แก้ไข Layout หลุดเฟรม */
+        /* 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴 */
+        
+        body { font-family: 'Sarabun', sans-serif; background: #f8f9fa; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; color: #333; box-sizing: border-box; }
+        
+        /* Main Container: จัดกลางสมบูรณ์และกำหนดความกว้างสูงสุด */
+        .container { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 600px; justify-content: center; align-items: center; }
+        
+        /* Card style: ทำให้ทุกกล่องดูสะอาดตา */
+        .card { background: white; width: 100%; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(220, 53, 69, 0.1); box-sizing: border-box; }
+        
+        h2 { color: #dc3545; margin-bottom: 20px; text-align: center; border-bottom: 3px solid #dc3545; padding-bottom: 15px; margin-top: 0; }
+        h3 { color: #dc3545; margin-top: 0; text-align: center; font-size: 1.2rem; }
+        
+        /* ปรับปรุง Input & Select: ให้ดูคมชัด */
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        input:focus, select:focus { border-color: #dc3545; outline: none; box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25); }
+        
+        /* ปุ่มหลักสีแดง */
+        button { background: #dc3545; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1.1rem; }
+        button:hover { background: #a71d2a; }
+        button:active { transform: scale(0.98); }
 
-    /* ปุ่มพิเศษโทนแดงเข้ม */
-    .btn-face { background: #a71d2a; color: white; margin-top: 10px; font-size: 1.1rem; padding: 15px;}
-    .btn-face:hover { background: #8e1824; }
-    
-    /* ปุ่มสถานะเดิม */
-    .btn-purple { background: #dc3545; } /* เปลี่ยนม่วงเป็นแดง */
-    .btn-purple:hover { background: #a71d2a; }
-    
-    .btn-success { background: #dc3545; } /* เปลี่ยนเขียวเป็นแดง */
-    .btn-success:hover { background: #a71d2a; }
+        /* ปุ่มพิเศษโทนแดงเข้ม (สำหรับสแกนหน้า) */
+        .btn-face { background: #a71d2a; color: white; margin-top: 15px; font-size: 1.2rem; padding: 15px; }
+        .btn-face:hover { background: #8e1824; }
+        
+        /* ปุ่มยกเลิก: แดงขาวแบบเส้น */
+        .btn-danger { background: #ffffff; color: #dc3545; border: 2px solid #dc3545; margin-top: 10px; }
+        .btn-danger:hover { background: #dc3545; color: white; }
 
-    .btn-danger { background: #ffffff; color: #dc3545; border: 1px solid #dc3545; }
-    .btn-danger:hover { background: #dc3545; color: white; }
+        .hidden { display: none !important; }
+        
+        /* ปรับปรุง Video Container: ให้มีเส้นขอบแดง */
+        #video-container { position: relative; width: 100%; background: #000; border-radius: 10px; overflow: hidden; min-height: 300px; display: flex; align-items: center; border: 4px solid #dc3545; }
+        video { width: 100%; height: auto; display: block; }
+        canvas { position: absolute; top: 0; left: 0; }
+        
+        /* กล่องสถานะ: แดงอ่อนและจัดกลาง */
+        #status-msg { margin-top: 15px; padding: 12px; border-radius: 8px; font-weight: bold; background: #f8d7da; color: #721c24; text-align: center; transition: 0.3s; border: 1px solid #f5c6cb; font-size: 15px; }
 
-    .hidden { display: none !important; }
-    
-    #video-container { position: relative; width: 100%; background: #000; border-radius: 10px; overflow: hidden; min-height: 300px; display: flex; align-items: center; border: 3px solid #dc3545; }
-    video { width: 100%; height: auto; display: block; }
-    canvas { position: absolute; top: 0; left: 0; }
-    
-    /* กล่องข้อความสถานะโทนแดงอ่อน */
-    #status-msg { margin-top: 10px; padding: 12px; border-radius: 8px; font-weight: bold; background: #f8d7da; color: #721c24; text-align: center; transition: 0.3s; border: 1px solid #f5c6cb; }
+        /* ตารางรายชื่อโทนแดง-ขาว */
+        #studentTable { width: 100%; border-collapse: collapse; margin-top: 25px; font-size: 14px; background: white; border-radius: 10px; overflow: hidden; border: 2px solid #eee; }
+        #studentTable thead { background-color: #dc3545; color: white; }
+        #studentTable th, #studentTable td { text-align: left; padding: 14px; border-bottom: 1px solid #eee; }
+        #studentTable tbody tr:hover { background-color: #f8f9fa; }
+        #studentTable td button { width: auto; padding: 6px 10px; font-size: 12px; margin: 0 2px; }
 
-    /* ตารางรายชื่อโทนแดง-ขาว */
-    #studentTable { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #eee; }
-    #studentTable thead { background-color: #dc3545; color: white; }
-    #studentTable th, #studentTable td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
-    #studentTable tbody tr:hover { background-color: #f8f9fa; }
-    #studentTable td button { width: auto; padding: 6px 10px; font-size: 12px; margin: 0 2px; }
+        /* สีสถานะ Hybrid */
+        .status-มา { color: #dc3545; font-weight: bold; } /* มา=แดง */
+        .status-ลา { color: #007bff; } /* ลา=ฟ้า (เพื่อให้เด่นต่าง) */
+        .status-สาย { color: #ffc107; color: black; } /* สาย=เหลือง */
 
-    /* สีสถานะ Hybrid */
-    .status-มา { color: #dc3545; font-weight: bold; } /* มา=แดง */
-    .status-ลา { color: #007bff; } /* ลา=ฟ้า (เพื่อให้เด่นต่าง) */
-    .status-สาย { color: #ffc107; color: black; } /* สาย=เหลือง */
+        /* 📋 กล่องรายการด้านขวา: ปรับเป็นด้านล่างในแนวตั้งเพื่อให้ปุ่มสแกนไม่หาย */
+        .log-card { background: white; width: 100%; padding: 20px; border-radius: 15px; box-shadow: 0 8px 20px rgba(220, 53, 69, 0.08); min-height: 200px; margin-top: 20px; }
+        #liveLogs { font-size: 13px; color: #555; max-height: 300px; overflow-y: auto; text-align: left;}
+        #liveLogs div { padding: 10px; border-bottom: 1px solid #eee; animation: fadeIn 0.5s; }
+        #liveLogs div:first-child { background-color: #f8d7da; font-weight: bold; border-radius: 5px; color: #721c24; }
 
-    /* Live Log ด้านขวา */
-    .log-card { background: white; width: 100%; padding: 20px; border-radius: 15px; box-shadow: 0 8px 20px rgba(220, 53, 69, 0.08); min-height: 400px; }
-    #liveLogs { font-size: 13px; color: #555; max-height: 500px; overflow-y: auto; text-align: left;}
-    #liveLogs div { padding: 8px; border-bottom: 1px solid #eee; animation: fadeIn 0.5s; }
-    #liveLogs div:first-child { background-color: #f8d7da; font-weight: bold; border-radius: 5px; color: #721c24; }
-
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-    @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
-  </style>
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
         <div id="loginView">
-            <h2>ระบบบริหารห้องเรียน AI<br><span style="font-size: 0.8rem; color: #666;">มล.อุปถัมภ์ไทยคีรี (แดง-ขาว)</span></h2>
+            <h2>ระบบบริหารห้องเรียน AI<br><span style="font-size: 0.9rem; color: #666; font-weight:normal;">มล.อุปถัมภ์ไทยคีรี (แดง-ขาว)</span></h2>
+            
             <button class="btn-face" onclick="app.startFaceLogin()">📸 สแกนหน้าเข้าสู่ระบบ</button>
-            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-            <input type="text" id="user" placeholder="รหัสประจำตัว (เช่น T001 หรือ 67001)" style="border-color: #dc3545;">
+            
+            <hr style="border: 0; border-top: 2px solid #eee; margin: 25px 0;">
+            
+            <label style="font-size: 14px; color: #dc3545; font-weight: bold;">เข้าสู่ระบบด้วยรหัส:</label>
+            <input type="text" id="user" placeholder="รหัสประจำตัว (T001 หรือ 67001)" style="border-color: #dc3545;">
             <input type="password" id="pass" placeholder="รหัสผ่าน" style="border-color: #dc3545;">
-            <button onclick="app.passLogin()" style="margin-top: 10px;">เข้าสู่ระบบด้วยรหัสผ่าน</button>
+            <button onclick="app.passLogin()" style="margin-top: 15px; width: 100%;">เข้าสู่ระบบด้วยรหัสผ่าน</button>
         </div>
 
         <div id="mainView" class="hidden">
@@ -93,17 +95,17 @@
                 <select id="subSel"><option>วิทยาการคำนวณ</option><option>คอมพิวเตอร์เพิ่มเติม</option></select>
                 <label style="font-size: 14px; color: #dc3545; font-weight: bold;">3. เลือกคาบ:</label>
                 <select id="periodSel"><option>1</option><option>2</option><option>3</option><option>4</option></select>
-                <button class="btn-face" style="margin-top: 15px; width: 100%;" onclick="app.startAttendance()">📸 เริ่มแสกนหน้าเช็คชื่อ (AI)</button>
-                <button class="btn-danger" style="margin-top: 10px; width: 100%;" onclick="location.reload()">ออกจากระบบ</button>
+                <button class="btn-face" style="margin-top: 20px; width: 100%;" onclick="app.startAttendance()">📸 เริ่มแสกนหน้าเช็คชื่อ (AI)</button>
+                <button class="btn-danger" style="margin-top: 15px; width: 100%;" onclick="location.reload()">ออกจากระบบ</button>
             </div>
 
-            <div id="video-wrap" class="hidden" style="margin-top: 20px;">
+            <div id="video-wrap" class="hidden" style="margin-top: 25px;">
                 <h3>โหมด AI สแกนใบหน้า</h3>
                 <div id="video-container">
                     <video id="video" width="400" height="300" autoplay muted playsinline></video>
                 </div>
                 <div id="status-msg">🔍 กำลังเตรียมระบบ AI...</div>
-                <button class="btn-danger" style="margin-top: 15px; width: 100%;" onclick="app.closeScanner()">❌ ปิดกล้อง / ย้อนกลับ</button>
+                <button class="btn-danger" style="margin-top: 20px; width: 100%;" onclick="app.closeScanner()">❌ ปิดกล้อง / ย้อนกลับ</button>
             </div>
 
             <table id="studentTable" class="hidden">
@@ -139,44 +141,49 @@
                 faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL)
             ]);
             // ดึงฐานข้อมูลใบหน้าทั้งหมดมาเก็บไว้ (Caching)
-            const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "getAllUsers" }) }).then(r => r.json());
-            if(res.status === "success") {
-                allUsersRaw = res.data;
-                // สร้าง FaceMatcher จากข้อมูลที่ย่อชื่อมา (n และ d)
-                if(allUsersRaw.length > 0) {
-                    faceMatcher = new faceapi.FaceMatcher(allUsersRaw.map(u => 
-                        new faceapi.LabeledFaceDescriptors(u.n || u.name, [new Float32Array(u.d || u.face)])
-                    ), 0.45); // ปรับความแม่นยำ 0.45 เข้มงวดขึ้น
+            try {
+                const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "getAllUsers" }) }).then(r => r.json());
+                if(res.status === "success") {
+                    allUsersRaw = res.data;
+                    // สร้าง FaceMatcher จากข้อมูลที่ย่อชื่อมา (n และ d)
+                    if(allUsersRaw.length > 0) {
+                        faceMatcher = new faceapi.FaceMatcher(allUsersRaw.map(u => 
+                            new faceapi.LabeledFaceDescriptors(u.n || u.name, [new Float32Array(u.d || u.face)])
+                        ), 0.45); // ปรับความแม่นยำ 0.45 เข้มงวดขึ้น
+                    }
                 }
-            }
+            } catch(e) { console.log("โหลดฐานข้อมูลไม่สำเร็จ: " + e.message); }
             console.log("AI Models & Face DB Loaded.");
         },
 
         // [1] Face Login (สแกนหน้าเข้าสู่ระบบ)
         startFaceLogin: async () => {
             alert("กรุณามองกล้อง 3 วินาที เพื่อสแกนหน้าเข้าสู่ระบบ");
-            cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
-            const v = document.createElement('video'); v.srcObject = cameraStream; v.play();
-            
-            setTimeout(async () => {
-                const det = await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-                if(det && faceMatcher) {
-                    const match = faceMatcher.findBestMatch(det.descriptor);
-                    const name = match.label;
-                    const user = allUsersRaw.find(u => (u.n || u.name) === name);
-                    
-                    if(user && (user.r === 'admin' || user.role === 'admin' || user.r === 'teacher' || user.role === 'teacher')) {
-                        app.onLoginSuccess({ id: user.id, name: user.n || user.name, role: user.r || user.role });
-                        cameraStream.getTracks().forEach(t => t.stop());
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const v = document.createElement('video'); v.srcObject = cameraStream; v.play();
+                
+                setTimeout(async () => {
+                    const det = await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+                    if(det && faceMatcher) {
+                        const match = faceMatcher.findBestMatch(det.descriptor);
+                        const name = match.label;
+                        const user = allUsersRaw.find(u => (u.n || u.name) === name);
+                        
+                        // ตรวจสอบสิทธิ์ว่าใช่ครูหรือแอดมินไหม
+                        if(user && (user.r === 'admin' || user.role === 'admin' || user.r === 'teacher' || user.role === 'teacher')) {
+                            app.onLoginSuccess({ id: user.id, name: user.n || user.name, role: user.r || user.role });
+                            cameraStream.getTracks().forEach(t => t.stop());
+                        } else {
+                            alert("ไม่พบใบหน้าผู้ดูแล/ครู หรือเป็นใบหน้านักเรียน ไม่สามารถ Login ได้");
+                            cameraStream.getTracks().forEach(t => t.stop());
+                        }
                     } else {
-                        alert("ไม่พบใบหน้าผู้ดูแล/ครู หรือเป็นใบหน้านักเรียน ไม่สามารถ Login ได้");
+                        alert("สแกนหน้าไม่สำเร็จ หรือยังไม่ได้โหลดฐานข้อมูล กรุณาลองใหม่ หรือใช้รหัสผ่าน");
                         cameraStream.getTracks().forEach(t => t.stop());
                     }
-                } else {
-                    alert("สแกนหน้าไม่สำเร็จ กรุณาลองใหม่ หรือใช้รหัสผ่าน");
-                    cameraStream.getTracks().forEach(t => t.stop());
-                }
-            }, 3000);
+                }, 3000);
+            } catch(e) { alert("เปิดกล้องไม่ได้"); }
         },
 
         // [2] Password Login (แบบเดิม)
@@ -185,18 +192,12 @@
             const p = document.getElementById('pass').value;
             if(!u || !p) return alert("กรุณากรอกข้อมูล");
             
-            const btn = document.querySelector('.btn-login') || document.querySelector('button[onclick="app.passLogin()"]');
-            btn.innerText = "กำลังตรวจสอบ...";
-
-            try {
-                const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "login", username: u, password: p }) }).then(r => r.json());
-                if(res.status === "success") {
-                    app.onLoginSuccess(res.user);
-                } else {
-                    alert(res.message);
-                }
-            } catch(e) { alert("เชื่อมต่อ GAS ผิดพลาด"); }
-            btn.innerText = "เข้าสู่ระบบด้วยรหัสผ่าน";
+            const res = await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: "login", username: u, password: p }) }).then(r => r.json());
+            if(res.status === "success") {
+                app.onLoginSuccess(res.user);
+            } else {
+                alert(res.message);
+            }
         },
 
         onLoginSuccess: (user) => {
@@ -214,7 +215,7 @@
         },
 
         // [3] โหลดตารางรายชื่อตามห้อง
-        loadClassroom: () => { 	
+        loadClassroom: () => {
             const room = document.getElementById('roomSel').value;
             if(!room) {
                 document.getElementById('studentTable').classList.add('hidden');
@@ -309,7 +310,7 @@
 
                         if(res.status === "success") {
                             checkedInUsers.add(name); // จำไว้ว่าคนนี้เช็คแล้ว
-                            app.updateLog(name, "มา"); // เพิ่มชื่อลงรายการด้านขวา
+                            app.updateLog(name, "มา"); // เพิ่มชื่อลงรายการด้านล่าง
                             
                             // อัปเดตตาราง Hybrid
                             const statTd = document.getElementById(`stat-${student.id}`);
@@ -349,7 +350,7 @@
             })});
         },
 
-        // อัปเดต Live Log ด้านขวา
+        // อัปเดต Live Log ด้านล่าง
         updateLog: (name, status) => {
             const logBox = document.getElementById('liveLogs');
             const now = new Date();
