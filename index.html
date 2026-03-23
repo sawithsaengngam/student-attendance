@@ -172,9 +172,12 @@
     </div>
 
     <div id="adminPanel" class="hidden">
-        <div class="card" style="margin-bottom: 15px; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center;">
+        <div class="card" style="margin-bottom: 15px; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap:10px;">
             <h2 style="margin: 0;">⚙️ ศูนย์บัญชาการ (Admin)</h2>
-            <button class="btn-outline btn-small" onclick="ui.show('teacherDashboard')">ย้อนกลับแผงควบคุม</button>
+            <div>
+                <button class="btn-outline btn-small" onclick="ui.show('teacherDashboard')">📸 โหมดเช็คชื่อ</button>
+                <button class="btn-dark btn-small" style="background: #333;" onclick="location.reload()">ออกจากระบบ</button>
+            </div>
         </div>
         
         <div class="card dashboard-grid" style="grid-template-columns: 1fr 1fr;">
@@ -196,10 +199,17 @@
         </div>
         
         <div class="card">
-            <h3>👥 ตรวจสอบสถานะใบหน้า (Reset Face)</h3>
-            <button class="btn-outline" style="width: 200px;" onclick="app.adminLoadUsers()">🔄 โหลดรายชื่อทั้งหมด</button>
+            <h3>👥 จัดการผู้ใช้งาน (เพิ่ม/ลบ/รีเซ็ตหน้า)</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn-outline" style="width: auto; padding: 0 15px;" onclick="app.adminLoadUsers()">🔄 โหลดรายชื่อ</button>
+                <button class="btn-dark" style="width: auto; padding: 0 15px;" onclick="app.adminAddUser('Staff')">👨‍🏫 +เพิ่มบุคลากร</button>
+                <button class="btn-dark" style="width: auto; padding: 0 15px;" onclick="app.adminAddUser('Student')">👨‍🎓 +เพิ่มนักเรียน</button>
+            </div>
             <div class="table-wrap" style="margin-top: 15px;">
-                <table><thead><tr><th>รหัส</th><th>ชื่อ</th><th>ประเภท</th><th>สถานะหน้า</th><th>จัดการ</th></tr></thead><tbody id="adminUsersBody"></tbody></table>
+                <table>
+                    <thead><tr><th>รหัส</th><th>ชื่อ</th><th>ประเภท</th><th>สถานะหน้า</th><th style="min-width: 140px;">จัดการ</th></tr></thead>
+                    <tbody id="adminUsersBody"><tr><td colspan="5" style="text-align:center;">กดปุ่มโหลดรายชื่อ</td></tr></tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -228,17 +238,17 @@
 
 <script>
     // ⚠️ นำ URL ของ Web App จาก GAS มาวางที่นี่ ⚠️
-    const API_URL = "https://script.google.com/macros/s/AKfycbxhkQ240ooVXtLfC5hNAF9YNCfKUS1jGAqxmhLoWhf6jyYAFLXOdu3kxbGfcgxaFBqE6A/exec"; 
+    const API_URL = "https://script.google.com/macros/s/AKfycbyfWo4qS19i7gy-gv82BZu2Y4u-IU5YZw2J6Y4RaAQPRqHw72yztUpjMaOfVvO0wtfJbQ/exec"; 
     const MODELS_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
     
     let stream, scanInt, faceMatcher, currentUsers = [];
     let checkedIn = new Set(); 
     let allSchoolData = [];
     let currentMode = 'subject'; 
-    let useFrontCamera = true; // ตั้งค่าเริ่มต้นเป็นกล้องหน้า
-    let pieChartInstance = null, lineChartInstance = null; // สำหรับ Chart.js
+    let useFrontCamera = true; 
+    let pieChartInstance = null, lineChartInstance = null; 
 
-    // 🔴 อัปเดต: ระบบแก้บั๊กปี พ.ศ. บน iPhone (แปลง 2569 เป็น 2026 ให้อัตโนมัติ)
+    // แปลงวันที่ + ดักจับปี พ.ศ. (Safari/iPhone Bug Fix)
     const formatDateToTH = (dateStr) => { 
         if(!dateStr) return ""; 
         let [y, m, d] = dateStr.split('-'); 
@@ -304,12 +314,26 @@
 
         // --- Setup Dashboards ---
         setupTeacher: async (user) => {
-            window.me = user; document.getElementById('t-welcome').innerText = `👨‍🏫 ครู${user.name}`;
-            if(user.role === 'admin' || user.role === 'Admin') document.getElementById('btnAdminPanel').classList.remove('hidden');
-            if(user.homeroom && user.homeroom !== '-') { document.getElementById('btnModeHR').classList.remove('hidden'); document.getElementById('btnModeSub').className = 'btn-dark'; }
-            ui.show('teacherDashboard');
-            const res = await api({ action: "getSubjects", teacherId: user.id }); const sel = document.getElementById('classSubSel');
-            if(res.status === "success" && res.data.length > 0) sel.innerHTML = res.data.map(sub => `<option value="${sub}">${sub}</option>`).join(''); else sel.innerHTML = `<option value="">-- ยังไม่มีวิชา --</option>`;
+            window.me = user; 
+            document.getElementById('t-welcome').innerText = `👨‍🏫 ครู${user.name}`;
+            
+            const res = await api({ action: "getSubjects", teacherId: user.id }); 
+            const sel = document.getElementById('classSubSel');
+            if(res.status === "success" && res.data.length > 0) sel.innerHTML = res.data.map(sub => `<option value="${sub}">${sub}</option>`).join(''); 
+            else sel.innerHTML = `<option value="">-- ยังไม่มีวิชา --</option>`;
+
+            if(user.homeroom && user.homeroom !== '-') { 
+                document.getElementById('btnModeHR').classList.remove('hidden'); 
+                document.getElementById('btnModeSub').className = 'btn-dark'; 
+            }
+
+            // ระบบ Routing สำหรับ Admin
+            if(user.role === 'admin' || user.role === 'Admin') { 
+                document.getElementById('btnAdminPanel').classList.remove('hidden');
+                app.loadAdminPanel(); 
+            } else {
+                ui.show('teacherDashboard');
+            }
         },
         setupStudent: async (user) => {
             ui.show('studentDashboard'); document.getElementById('s-info').innerText = `รหัส: ${user.id} | ห้อง: ${user.rm}`;
@@ -336,7 +360,6 @@
             else { document.getElementById('btnModeHR').className = 'btn-outline'; document.getElementById('btnModeSub').className = 'btn-dark'; document.getElementById('subjectControls').classList.remove('hidden'); }
         },
         
-        // 🔴 อัปเดต: ระบบดึงข้อมูลเมื่อสลับวิชา/คาบ/วัน
         handleSessionChange: () => {
             app.resetSession();
             app.syncState();
@@ -346,7 +369,6 @@
             const dateStr = formatDateToTH(document.getElementById('attDate').value);
             const period = currentMode === 'homeroom' ? 'เข้าแถวเช้า' : document.getElementById('classPeriodSel').value;
             
-            // ดึงข้อมูลเดิมจากฐานข้อมูลมาระบายสีกลับลงตาราง
             const res = await api({ action: "getTeacherReport", teacherId: window.me.id, date: dateStr, period: period });
             if(res.status === "success" && res.data && res.data.length > 0) {
                 res.data.forEach(record => {
@@ -371,7 +393,6 @@
                 document.getElementById('studentBody').innerHTML = currentUsers.map(s => `<tr><td>${s.n}</td><td id="stat-${s.id}" class="status-รอเช็ค">รอเช็ค</td>
                 <td><button class="btn-small btn-green" onclick="app.manualMark('${s.id}','${s.n}','มา')">มา</button><button class="btn-small btn-blue" onclick="app.manualMark('${s.id}','${s.n}','ลา')">ลา</button><button class="btn-small btn-yellow" onclick="app.manualMark('${s.id}','${s.n}','สาย')">สาย</button></td></tr>`).join('');
                 
-                // 🔴 โหลดหน้าเสร็จ ให้ดึงข้อมูลเก่ามาระบายสีทับทันที
                 app.syncState();
             }
         },
@@ -420,9 +441,9 @@
                                     processing = true; document.getElementById('status-msg').innerText = `✨ บันทึก: ${std.n}`; document.getElementById('status-msg').style.background = "#d1e7dd";
                                     
                                     app.manualMark(std.id, std.n, "มา", true);
-                                    app.playBeep(); // เสียงปิ๊บ
-                                    app.speakName(std.n); // โฆษก AI
-                                    setTimeout(() => { processing = false; document.getElementById('status-msg').innerText = "🔍 พร้อมสแกนคนต่อไป..."; }, 1000); // 1 วินาที Fast Scan
+                                    app.playBeep();
+                                    app.speakName(std.n);
+                                    setTimeout(() => { processing = false; document.getElementById('status-msg').innerText = "🔍 พร้อมสแกนคนต่อไป..."; }, 1000);
                                 }
                             }
                         }
@@ -462,16 +483,54 @@
             let csv = "data:text/csv;charset=utf-8,\uFEFFวันที่,คาบ,ชื่อ-นามสกุล,วิชา,สถานะ\n"; tbody.querySelectorAll('tr').forEach(row => { const cols = row.querySelectorAll('td'); if(cols.length===5) csv += Array.from(cols).map(c => `"${c.innerText}"`).join(",") + "\n"; });
             const link = document.createElement("a"); link.setAttribute("href", encodeURI(csv)); link.setAttribute("download", `รายงานโรงเรียน.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link);
         },
+        
+        // --- Admin: จัดการผู้ใช้งาน ---
         adminLoadUsers: async () => {
-            document.getElementById('adminUsersBody').innerHTML = '<tr><td colspan="5" style="text-align:center;">กำลังโหลดข้อมูล...</td></tr>'; const res = await api({ action: "adminManage", subAction: "getUsers" });
-            if(res.status === "success") { document.getElementById('adminUsersBody').innerHTML = res.data.map(u => `<tr><td>${u.id}</td><td>${u.name}</td><td>${u.type}</td><td style="color:${u.hasFace ? 'green':'red'}">${u.hasFace ? 'มีข้อมูล' : 'ยังไม่สแกน'}</td><td><button class="btn-small btn-outline" onclick="app.adminResetFace('${u.id}', '${u.name}')">ลบใบหน้า</button></td></tr>`).join(''); }
+            document.getElementById('adminUsersBody').innerHTML = '<tr><td colspan="5" style="text-align:center;">กำลังโหลดข้อมูล...</td></tr>'; 
+            const res = await api({ action: "adminManage", subAction: "getUsers" });
+            if(res.status === "success") { 
+                document.getElementById('adminUsersBody').innerHTML = res.data.map(u => `
+                <tr><td>${u.id}</td><td>${u.name}</td><td>${u.typeDisplay}</td><td style="color:${u.hasFace ? 'green':'red'}">${u.hasFace ? 'มีข้อมูล' : 'ยังไม่สแกน'}</td>
+                <td><button class="btn-small btn-outline" onclick="app.adminResetFace('${u.id}', '${u.name}')">ลบหน้า</button>
+                <button class="btn-small" style="background:#dc3545; color:white; border:none;" onclick="app.adminDeleteUser('${u.id}', '${u.name}', '${u.rawType}')">ลบชื่อ</button></td></tr>`).join(''); 
+            }
         },
         adminResetFace: async (id, name) => {
             const res = await Swal.fire({ title: `ยืนยันลบใบหน้า ${name}?`, icon: 'warning', showCancelButton: true, confirmButtonText: 'ลบทิ้ง' });
             if(res.isConfirmed) { const apiRes = await api({ action: "adminManage", subAction: "resetFace", userId: id }); if(apiRes.status === "success") { Swal.fire('สำเร็จ', 'ลบใบหน้าแล้ว', 'success'); app.adminLoadUsers(); } }
         },
+        adminDeleteUser: async (id, name, type) => {
+            const res = await Swal.fire({ title: `ยืนยันลบข้อมูล ${name}?`, text: "ลบแล้วจะไม่สามารถกู้คืนได้!", icon: 'error', showCancelButton: true, confirmButtonText: 'ลบข้อมูล', confirmButtonColor: '#dc3545' });
+            if(res.isConfirmed) { 
+                Swal.fire({ title: 'กำลังลบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                const apiRes = await api({ action: "adminManage", subAction: "deleteUser", userId: id, userType: type }); 
+                if(apiRes.status === "success") { Swal.fire('สำเร็จ', 'ลบข้อมูลแล้ว', 'success'); app.adminLoadUsers(); } 
+            }
+        },
+        adminAddUser: async (type) => {
+            let htmlForm = "";
+            if(type === 'Staff') htmlForm = `<input id="swal-id" class="swal2-input" placeholder="รหัสประจำตัวครู (เช่น 1001)"><input id="swal-pass" class="swal2-input" placeholder="รหัสผ่าน"><input id="swal-name" class="swal2-input" placeholder="ชื่อ-นามสกุล"><select id="swal-role" class="swal2-select" style="width:80%; margin: 10px auto; display:block; font-size:15px;"><option value="teacher">สิทธิ์: ครูผู้สอน (Teacher)</option><option value="admin">สิทธิ์: ผู้ดูแลระบบ (Admin)</option></select><input id="swal-room" class="swal2-input" placeholder="ห้องประจำชั้น (เช่น ป.5/1 ถ้าไม่มีใส่ -)">`;
+            else htmlForm = `<input id="swal-id" class="swal2-input" placeholder="รหัสประจำตัวนักเรียน (เช่น 67001)"><input id="swal-name" class="swal2-input" placeholder="ชื่อ-นามสกุล"><input id="swal-room" class="swal2-input" placeholder="ห้องเรียน (เช่น ป.5/1)">`;
+            
+            const { value: formValues } = await Swal.fire({
+                title: type === 'Staff' ? 'เพิ่มบุคลากรใหม่' : 'เพิ่มนักเรียนใหม่',
+                html: htmlForm, focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึก',
+                preConfirm: () => {
+                    const id = document.getElementById('swal-id').value; const name = document.getElementById('swal-name').value;
+                    if(!id || !name) { Swal.showValidationMessage('กรุณากรอกรหัสและชื่อให้ครบถ้วน'); return false; }
+                    if(type === 'Staff') return { id, password: document.getElementById('swal-pass').value, name, role: document.getElementById('swal-role').value, homeroom: document.getElementById('swal-room').value || '-' };
+                    return { id, name, room: document.getElementById('swal-room').value };
+                }
+            });
 
-        // 🔴 ฟังก์ชันวาดกราฟ Chart.js
+            if(formValues) {
+                Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                const apiRes = await api({ action: "adminManage", subAction: "addUser", userType: type, ...formValues });
+                if(apiRes.status === "success") { Swal.fire('สำเร็จ', 'เพิ่มข้อมูลเข้าฐานข้อมูลแล้ว', 'success'); app.adminLoadUsers(); }
+            }
+        },
+
+        // --- กราฟ Chart.js ---
         renderCharts: (data) => {
             const today = formatDateToTH(document.getElementById('admin-dateFilter').value);
             const todayData = data.filter(r => r.date === today);
@@ -480,13 +539,8 @@
 
             if(pieChartInstance) pieChartInstance.destroy();
             const ctxPie = document.getElementById('pieChart').getContext('2d');
-            pieChartInstance = new Chart(ctxPie, {
-                type: 'doughnut',
-                data: { labels: ['มา', 'ลา', 'สาย', 'ขาด'], datasets: [{ data: [stats.มา, stats.ลา, stats.สาย, stats.ขาด], backgroundColor: ['#198754', '#0dcaf0', '#ffc107', '#dc3545'] }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-            });
+            pieChartInstance = new Chart(ctxPie, { type: 'doughnut', data: { labels: ['มา', 'ลา', 'สาย', 'ขาด'], datasets: [{ data: [stats.มา, stats.ลา, stats.สาย, stats.ขาด], backgroundColor: ['#198754', '#0dcaf0', '#ffc107', '#dc3545'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
 
-            // หา 7 วันล่าสุดสำหรับการลากเส้นแนวโน้ม
             let trendDates = {};
             data.forEach(r => { if(!trendDates[r.date]) trendDates[r.date] = 0; if(r.status === 'มา' || r.status === 'สาย') trendDates[r.date]++; });
             const sortedDates = Object.keys(trendDates).sort().slice(-7);
@@ -494,11 +548,7 @@
 
             if(lineChartInstance) lineChartInstance.destroy();
             const ctxLine = document.getElementById('lineChart').getContext('2d');
-            lineChartInstance = new Chart(ctxLine, {
-                type: 'line',
-                data: { labels: sortedDates, datasets: [{ label: 'ยอดนักเรียนเข้าเรียน', data: trendData, borderColor: '#dc3545', backgroundColor: 'rgba(220, 53, 69, 0.1)', fill: true, tension: 0.3 }] },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
-            });
+            lineChartInstance = new Chart(ctxLine, { type: 'line', data: { labels: sortedDates, datasets: [{ label: 'ยอดนักเรียนเข้าเรียน', data: trendData, borderColor: '#dc3545', backgroundColor: 'rgba(220, 53, 69, 0.1)', fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } } });
         }
     };
     app.init(); 
