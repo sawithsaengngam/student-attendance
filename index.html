@@ -26,7 +26,7 @@
         .dashboard-grid { display: grid; grid-template-columns: 380px 1fr; gap: 20px; align-items: start; }
         @media (max-width: 800px) { .dashboard-grid { grid-template-columns: 1fr; } }
         
-        /* 🔴 แก้ไข CSS วิดีโอให้ได้สัดส่วนเป๊ะ เพื่อให้กรอบตรงหน้า 100% */
+        /* วิดีโอสัดส่วนเป๊ะเพื่อความแม่นยำ */
         .video-box { position: relative; width: 100%; max-width: 500px; margin: 10px auto; background: #000; border-radius: 8px; overflow: hidden; border: 3px solid #dc3545; line-height: 0; display: flex; justify-content: center; }
         video { width: 100%; height: auto; display: block; object-fit: contain; } 
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
@@ -251,6 +251,7 @@
     let useFrontCamera = true; 
     let pieChartInstance = null, lineChartInstance = null; 
 
+    // แปลงปี พ.ศ. ของ Apple เป็น ค.ศ.
     const formatDateToTH = (dateStr) => { 
         if(!dateStr) return ""; 
         let [y, m, d] = dateStr.split('-'); 
@@ -273,6 +274,7 @@
             const todayISO = new Date().toISOString().split('T')[0]; document.getElementById('attDate').value = todayISO; document.getElementById('tr-date').value = todayISO; document.getElementById('admin-dateFilter').value = todayISO;
         },
 
+        // --- Login ระบบ ---
         staffPassLogin: async () => {
             const u = document.getElementById('t-user').value, p = document.getElementById('t-pass').value; if(!u || !p) return Swal.fire('แจ้งเตือน', 'กรุณากรอกข้อมูล', 'warning');
             Swal.fire({ title: 'กำลังเข้าสู่ระบบ', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
@@ -302,7 +304,7 @@
             try {
                 const v = document.getElementById(videoId); const wrap = document.getElementById(wrapId); wrap.classList.remove('hidden');
                 stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } }); v.srcObject = stream; 
-                v.style.transform = "none"; // แก้ไขไม่กลับหน้า
+                v.style.transform = "scaleX(-1)"; // ภาพกระจกในหน้าล็อกอิน
                 let attempts = 0;
                 const loginScanInt = setInterval(async () => {
                     attempts++; const det = await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
@@ -314,6 +316,7 @@
             } catch(e) { Swal.fire('Error', 'เปิดกล้องไม่ได้', 'error'); }
         },
 
+        // --- Setup Dashboards ---
         setupTeacher: async (user) => {
             window.me = user; 
             document.getElementById('t-welcome').innerText = `👨‍🏫 ครู${user.name}`;
@@ -327,6 +330,7 @@
                 document.getElementById('btnModeSub').className = 'btn-dark'; 
             }
 
+            // แอดมินวาร์ปไปหน้าจัดการ
             if(user.role === 'admin' || user.role === 'Admin') { 
                 document.getElementById('btnAdminPanel').classList.remove('hidden');
                 app.loadAdminPanel(); 
@@ -352,15 +356,13 @@
             }
         },
 
+        // --- Teacher Logic ---
         setMode: (mode) => {
             currentMode = mode; app.handleSessionChange();
             if(mode === 'homeroom') { document.getElementById('btnModeHR').className = 'btn-dark'; document.getElementById('btnModeSub').className = 'btn-outline'; document.getElementById('subjectControls').classList.add('hidden'); document.getElementById('classRoomSel').value = window.me.homeroom; app.loadClassroom(); } 
             else { document.getElementById('btnModeHR').className = 'btn-outline'; document.getElementById('btnModeSub').className = 'btn-dark'; document.getElementById('subjectControls').classList.remove('hidden'); }
         },
-        handleSessionChange: () => {
-            app.resetSession();
-            app.syncState();
-        },
+        handleSessionChange: () => { app.resetSession(); app.syncState(); },
         syncState: async () => {
             if(currentUsers.length === 0) return;
             const dateStr = formatDateToTH(document.getElementById('attDate').value);
@@ -369,11 +371,7 @@
             if(res.status === "success" && res.data && res.data.length > 0) {
                 res.data.forEach(record => {
                     const td = document.getElementById(`stat-${record.id}`);
-                    if(td) {
-                        td.innerText = record.status;
-                        td.className = `status-${record.status}`;
-                        checkedIn.add(record.id.toString());
-                    }
+                    if(td) { td.innerText = record.status; td.className = `status-${record.status}`; checkedIn.add(record.id.toString()); }
                 });
             }
         },
@@ -399,41 +397,31 @@
             } else { Swal.fire('ล้มเหลว', vRes.message, 'error'); }
         },
 
-        // 🔴 ปลดล็อกระบบเสียงบนมือถือ 
+        // --- Camera & Audio & AI ---
         unlockAudio: () => {
             if (!window.audioCtx) window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (window.audioCtx.state === 'suspended') window.audioCtx.resume();
             const osc = window.audioCtx.createOscillator();
             osc.connect(window.audioCtx.destination);
-            osc.start(window.audioCtx.currentTime);
-            osc.stop(window.audioCtx.currentTime + 0.001);
-
-            if ('speechSynthesis' in window) {
-                const msg = new SpeechSynthesisUtterance('');
-                msg.volume = 0;
-                window.speechSynthesis.speak(msg);
-            }
+            osc.start(window.audioCtx.currentTime); osc.stop(window.audioCtx.currentTime + 0.001);
+            if ('speechSynthesis' in window) { const msg = new SpeechSynthesisUtterance(''); msg.volume = 0; window.speechSynthesis.speak(msg); }
         },
-
         startAttendance: () => {
             if(currentMode === 'subject' && (!document.getElementById('classRoomSel').value || !document.getElementById('classSubSel').value)) return Swal.fire('แจ้งเตือน', 'เลือกห้องและวิชาก่อน', 'warning');
-            app.unlockAudio(); // เรียกใช้ก่อนสแกน
+            app.unlockAudio(); // ปลดล็อกเสียงบน iPhone
             window.isMode = 'attendance'; document.getElementById('video-wrap').classList.remove('hidden'); document.getElementById('status-msg').innerText = "✅ พร้อมสแกนหน้าครับ"; document.getElementById('status-msg').style.background = "#d1e7dd"; app.startLiveCam();
         },
-
         toggleCamera: () => {
             useFrontCamera = !useFrontCamera; app.closeScanner();
             setTimeout(() => { document.getElementById('video-wrap').classList.remove('hidden'); document.getElementById('status-msg').innerText = "🔄 กำลังสลับกล้อง..."; app.startLiveCam(); }, 500);
         },
-        
         playBeep: () => { 
             try { 
                 if (!window.audioCtx) window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = window.audioCtx.createOscillator(); const gain = window.audioCtx.createGain(); 
                 osc.connect(gain); gain.connect(window.audioCtx.destination); 
                 osc.type = 'sine'; osc.frequency.setValueAtTime(880, window.audioCtx.currentTime); 
-                gain.gain.setValueAtTime(0.5, window.audioCtx.currentTime); // เพิ่มระดับความดัง
-                osc.start(window.audioCtx.currentTime); osc.stop(window.audioCtx.currentTime + 0.1); 
+                gain.gain.setValueAtTime(0.5, window.audioCtx.currentTime); osc.start(window.audioCtx.currentTime); osc.stop(window.audioCtx.currentTime + 0.1); 
             } catch (e) {} 
         },
         speakName: (fullName) => { if (!('speechSynthesis' in window)) return; let cleanName = fullName.replace(/ด\.ช\.|ด\.ญ\.|นาย|นางสาว|น\.ส\./g, '').trim().split(' ')[0]; const utterance = new SpeechSynthesisUtterance(cleanName); utterance.lang = 'th-TH'; utterance.rate = 1.3; utterance.pitch = 1.1; window.speechSynthesis.speak(utterance); },
@@ -443,43 +431,63 @@
                 stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: useFrontCamera ? "user" : "environment" } }); 
                 const v = document.getElementById('video'); v.srcObject = stream;
                 
-                // 🔴 ไม่พลิกวิดีโอ เพื่อให้ตัวหนังสือและกรอบถูกต้อง 100%
-                v.style.transform = "none";
+                // กลับด้านวิดีโอถ้าเป็นกล้องหน้า
+                v.style.transform = useFrontCamera ? "scaleX(-1)" : "none";
 
                 v.onloadedmetadata = () => { v.play(); };
 
                 v.onplay = () => {
                     const canvas = faceapi.createCanvasFromMedia(v); document.getElementById('video-container').append(canvas); 
-                    
-                    // ใช้ videoWidth เพื่อให้สเกลกรอบน้ำเงินตรงกับหน้าเด็กเป๊ะ
                     const displaySize = { width: v.videoWidth, height: v.videoHeight };
                     faceapi.matchDimensions(canvas, displaySize);
                     
-                    canvas.style.transform = "none"; // ไม่พลิก canvas ด้วย
+                    // Canvas วาดกรอบห้ามกลับด้าน เพื่อให้ตัวอักษรถูกต้อง
+                    canvas.style.transform = "none"; 
                     
                     let processing = false;
                     scanInt = setInterval(async () => {
                         if(processing) return; const det = await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
                         if(det) {
-                            canvas.getContext('2d').clearRect(0,0, canvas.width, canvas.height); 
+                            const ctx = canvas.getContext('2d');
+                            ctx.clearRect(0,0, canvas.width, canvas.height); 
                             
-                            // เปลี่ยนขนาด Detection box ให้เข้ากับกล้องจริง
-                            const resizedDetections = faceapi.resizeResults(det, displaySize);
-                            faceapi.draw.drawDetections(canvas, resizedDetections);
+                            const resizedDet = faceapi.resizeResults(det, displaySize);
+                            const box = resizedDet.detection.box;
+                            
+                            // คำนวณแกน x สำหรับวาดกรอบ
+                            const drawX = useFrontCamera ? (canvas.width - box.x - box.width) : box.x;
+                            
+                            // 🔴 ตั้งค่ากรอบ สีฟ้า=เปอร์เซ็นต์ค้นหา / สีเขียว=เจอหน้า+ชื่อสั้น
+                            let boxColor = '#0d6efd'; 
+                            let labelText = Math.round(det.detection.score * 100) + '%';
+                            let matchedStudent = null;
+
+                            if(window.isMode === 'attendance' && faceMatcher && currentUsers.length > 0) {
+                                const match = faceMatcher.findBestMatch(det.descriptor); 
+                                matchedStudent = currentUsers.find(s => s.id === match.label);
+                                if(matchedStudent) {
+                                    boxColor = '#198754'; 
+                                    labelText = matchedStudent.n.replace(/ด\.ช\.|ด\.ญ\.|นาย|นางสาว|น\.ส\./g, '').trim().split(' ')[0];
+                                }
+                            }
+
+                            // วาดกรอบและพื้นหลังข้อความอัตโนมัติ
+                            ctx.strokeStyle = boxColor; ctx.lineWidth = 3; ctx.strokeRect(drawX, box.y, box.width, box.height);
+                            ctx.font = 'bold 16px Arial';
+                            const textWidth = ctx.measureText(labelText).width; 
+                            ctx.fillStyle = boxColor; ctx.fillRect(drawX, box.y - 25, textWidth + 10, 25); 
+                            ctx.fillStyle = '#ffffff'; ctx.fillText(labelText, drawX + 5, box.y - 7);
                             
                             if(window.isMode === 'enroll') { processing = true; document.getElementById('status-msg').innerText = "⏳ กำลังส่งข้อมูล..."; document.getElementById('status-msg').style.background = "#fff3cd"; const res = await api({ action: "saveFace", username: window.enrollId, descriptor: Array.from(det.descriptor) }); Swal.fire('สำเร็จ', res.message, 'success'); app.closeScanner(); return; }
                             
-                            if(window.isMode === 'attendance' && faceMatcher && currentUsers.length > 0) {
-                                const match = faceMatcher.findBestMatch(det.descriptor); const std = currentUsers.find(s => s.id === match.label);
-                                if(std) {
-                                    if(checkedIn.has(std.id) && document.getElementById(`stat-${std.id}`).innerText === "มา") return; 
-                                    processing = true; document.getElementById('status-msg').innerText = `✨ บันทึก: ${std.n}`; document.getElementById('status-msg').style.background = "#d1e7dd";
-                                    
-                                    app.manualMark(std.id, std.n, "มา", true);
-                                    app.playBeep();
-                                    app.speakName(std.n);
-                                    setTimeout(() => { processing = false; document.getElementById('status-msg').innerText = "🔍 พร้อมสแกนคนต่อไป..."; }, 1000);
-                                }
+                            if(window.isMode === 'attendance' && matchedStudent) {
+                                if(checkedIn.has(matchedStudent.id) && document.getElementById(`stat-${matchedStudent.id}`).innerText === "มา") return; 
+                                processing = true; document.getElementById('status-msg').innerText = `✨ บันทึก: ${matchedStudent.n}`; document.getElementById('status-msg').style.background = "#d1e7dd";
+                                
+                                app.manualMark(matchedStudent.id, matchedStudent.n, "มา", true);
+                                app.playBeep();
+                                app.speakName(matchedStudent.n);
+                                setTimeout(() => { processing = false; document.getElementById('status-msg').innerText = "🔍 พร้อมสแกนคนต่อไป..."; }, 1000);
                             }
                         }
                     }, 300);
