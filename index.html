@@ -7,24 +7,20 @@
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
         body { font-family: 'Sarabun', sans-serif; background: #f8f9fa; margin: 0; padding: 20px; color: #333; display: flex; justify-content: center; min-height: 100vh; }
-        .container { width: 100%; max-width: 1000px; }
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 20px rgba(220, 53, 69, 0.1); border-top: 5px solid #dc3545; box-sizing: border-box; margin-bottom: 20px;}
+        .container { width: 100%; max-width: 1050px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 20px rgba(220, 53, 69, 0.1); border-top: 5px solid #dc3545; box-sizing: border-box; margin-bottom: 20px;}
         .center-card { max-width: 450px; margin: 40px auto; text-align: center; }
         h2, h3 { color: #dc3545; margin-top: 0; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
-        input:focus, select:focus { border-color: #dc3545; outline: none; }
-        button { width: 100%; padding: 12px; margin: 8px 0; background: #dc3545; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
+        input, select { width: 100%; padding: 10px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 15px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; margin: 8px 0; background: #dc3545; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; transition: 0.2s; }
         button:hover { background: #b02a37; }
-        .btn-dark { background: #842029; } .btn-dark:hover { background: #5c161d; }
-        .btn-outline { background: white; color: #dc3545; border: 2px solid #dc3545; }
-        .btn-outline:hover { background: #dc3545; color: white; }
-        .btn-small { width: auto; padding: 6px 12px; font-size: 13px; margin: 0 2px; }
-        .btn-green { background: #198754; } .btn-green:hover { background: #157347; }
+        .btn-dark { background: #842029; } .btn-outline { background: white; color: #dc3545; border: 2px solid #dc3545; }
+        .btn-green { background: #198754; } .btn-blue { background: #0dcaf0; color: white; } .btn-yellow { background: #ffc107; color: black; }
+        .btn-small { width: auto; padding: 5px 10px; font-size: 12px; margin: 0 2px; }
         .hidden { display: none !important; }
 
-        .dashboard-grid { display: grid; grid-template-columns: 400px 1fr; gap: 20px; align-items: start; }
+        .dashboard-grid { display: grid; grid-template-columns: 380px 1fr; gap: 20px; align-items: start; }
         @media (max-width: 800px) { .dashboard-grid { grid-template-columns: 1fr; } }
-
         .video-box { position: relative; width: 100%; background: #000; border-radius: 8px; overflow: hidden; border: 3px solid #dc3545; margin-top: 10px; }
         video { width: 100%; display: block; }
         canvas { position: absolute; top: 0; left: 0; }
@@ -34,9 +30,9 @@
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         thead { position: sticky; top: 0; background: #dc3545; color: white; z-index: 1;}
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
-        .status-มา { color: #198754; font-weight: bold; } .status-ลา { color: #0dcaf0; font-weight: bold; } .status-สาย { color: #ffc107; font-weight: bold; color: #856404; }
+        .status-มา { color: #198754; font-weight: bold; } .status-ลา { color: #0dcaf0; font-weight: bold; } .status-สาย { color: #ffc107; font-weight: bold; color: #856404; } .status-รอเช็ค { color: #aaa; }
 
-        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
         .stat-box { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #eee; }
         .stat-box h4 { margin: 0; font-size: 24px; color: #dc3545; }
     </style>
@@ -47,8 +43,8 @@
     <div id="homeView" class="card center-card">
         <h2>โรงเรียนแม่หลวงอุปถัมภ์ไทยคีรี</h2>
         <p style="color: #666; margin-bottom: 20px;">AI Class Management</p>
-        <button onclick="ui.show('teacherLoginView')">👨‍🏫 สำหรับคุณครู (แผงควบคุม)</button>
-        <button class="btn-dark" onclick="ui.show('studentLoginView')">👨‍🎓 สำหรับนักเรียน (ดูเวลาเรียน)</button>
+        <button onclick="ui.show('teacherLoginView')">👨‍🏫 สำหรับคุณครู</button>
+        <button class="btn-dark" onclick="ui.show('studentLoginView')">👨‍🎓 สำหรับนักเรียน</button>
     </div>
 
     <div id="teacherLoginView" class="card center-card hidden">
@@ -57,7 +53,7 @@
         <div id="t-login-cam" class="video-box hidden"><video id="t-video" autoplay muted playsinline></video></div>
         <div id="t-login-status" style="color:#dc3545; margin-top:5px; font-weight:bold;"></div>
         <hr style="margin:20px 0; border:0; border-top:1px dashed #ddd;">
-        <input type="text" id="t-user" placeholder="รหัสประจำตัวครู (เช่น T001)">
+        <input type="text" id="t-user" placeholder="รหัสประจำตัวครู">
         <input type="password" id="t-pass" placeholder="รหัสผ่าน">
         <button onclick="app.staffPassLogin()">เข้าสู่ระบบ</button>
         <button class="btn-outline" onclick="ui.show('homeView')">ย้อนกลับ</button>
@@ -74,11 +70,12 @@
     </div>
 
     <div id="teacherDashboard" class="hidden">
-        <div class="card" style="margin-bottom: 15px; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap:10px;">
+        <div class="card" style="margin-bottom: 15px; padding: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap:5px;">
             <h3 id="t-welcome" style="margin: 0;">สวัสดีคุณครู</h3>
             <div>
-                <button id="btnAdminReport" class="btn-dark btn-small hidden" onclick="app.loadSchoolReport()">📊 รายงานโรงเรียน</button>
-                <button class="btn-outline btn-small" onclick="location.reload()">ออกจากระบบ</button>
+                <button class="btn-outline btn-small" onclick="app.loadTeacherReport()">📊 สรุปการสอนของฉัน</button>
+                <button id="btnAdminReport" class="btn-dark btn-small hidden" onclick="app.loadSchoolReport()">🏫 รายงานโรงเรียน</button>
+                <button class="btn-dark btn-small" style="background: #333;" onclick="location.reload()">ออกจากระบบ</button>
             </div>
         </div>
 
@@ -89,20 +86,20 @@
                 
                 <label>วิชาของคุณครู:</label>
                 <div style="display: flex; gap: 5px;">
-                    <select id="classSubSel" style="flex: 1;"><option value="">-- กำลังโหลดวิชา --</option></select>
+                    <select id="classSubSel" style="flex: 1;" onchange="app.resetSession()"><option value="">-- กำลังโหลดวิชา --</option></select>
                     <button class="btn-outline" style="width: auto; padding: 0 10px;" onclick="app.addNewSubject()">+เพิ่ม</button>
                     <button class="btn-outline" style="width: auto; padding: 0 10px; border-color: #6c757d; color: #6c757d;" onclick="app.deleteSubject()">-ลบ</button>
                 </div>
                 
                 <label>คาบเรียน:</label>
-                <select id="classPeriodSel">
+                <select id="classPeriodSel" onchange="app.resetSession()">
                     <option value="1">คาบที่ 1</option><option value="2">คาบที่ 2</option><option value="3">คาบที่ 3</option><option value="4">คาบที่ 4</option>
                     <option value="5">คาบที่ 5</option><option value="6">คาบที่ 6</option><option value="7">คาบที่ 7</option><option value="8">คาบที่ 8</option>
                 </select>
                 
                 <hr style="margin: 15px 0; border:0; border-top:1px dashed #ddd;">
                 <button onclick="app.startAttendance()">📸 เริ่มแสกนเช็คชื่อ (AI)</button>
-                <button class="btn-dark" onclick="app.openEnrollment()">👤 บันทึกใบหน้า (ครู/นักเรียนใหม่)</button>
+                <button class="btn-dark" onclick="app.openEnrollment()">👤 บันทึกใบหน้า (ครู/นักเรียน)</button>
 
                 <div id="video-wrap" class="hidden">
                     <div id="video-container" class="video-box"><video id="video" autoplay muted playsinline></video></div>
@@ -112,44 +109,61 @@
             </div>
 
             <div class="card" id="rightPanel">
-                <h3 style="margin-bottom: 15px;">📋 รายชื่อนักเรียน <span id="roomTitle"></span></h3>
+                <h3 style="margin-bottom: 10px;">📋 รายชื่อนักเรียน <span id="roomTitle"></span></h3>
                 <div class="table-wrap">
                     <table id="studentTable">
-                        <thead><tr><th>ชื่อ-นามสกุล</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+                        <thead><tr><th>ชื่อ-นามสกุล</th><th>สถานะ</th><th style="min-width: 140px;">จัดการ (แก้ได้)</th></tr></thead>
                         <tbody id="studentBody"><tr><td colspan="3" style="text-align:center;">เลือกระดับชั้นเพื่อโหลดรายชื่อ</td></tr></tbody>
                     </table>
                 </div>
                 <div class="status-box" style="background: #f8f9fa; text-align: left; margin-top: 15px; border-left: 4px solid #dc3545;">
-                    <strong>บันทึกล่าสุด:</strong><div id="liveLogs" style="color: #666; font-size: 13px; margin-top: 5px;">ยังไม่มีข้อมูล</div>
+                    <strong>บันทึกล่าสุด:</strong><div id="liveLogs" style="color: #666; font-size: 12px; margin-top: 5px; max-height: 80px; overflow-y: auto;">ยังไม่มีข้อมูลในคาบนี้</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="adminDashboard" class="hidden">
-        <div class="card" style="margin-bottom: 15px; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="margin: 0;">📊 รายงานการเข้าเรียนระดับโรงเรียน</h2>
+    <div id="teacherReportView" class="hidden card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="margin: 0;">📊 สรุปการสอนของฉัน</h2>
             <button class="btn-outline btn-small" onclick="ui.show('teacherDashboard')">ย้อนกลับ</button>
         </div>
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <input type="text" id="tr-date" placeholder="วันที่ (เช่น 15/08/2026)">
+            <select id="tr-period"><option value="1">คาบที่ 1</option><option value="2">คาบที่ 2</option><option value="3">คาบที่ 3</option><option value="4">คาบ 4</option><option value="5">คาบ 5</option><option value="6">คาบ 6</option><option value="7">คาบ 7</option><option value="8">คาบ 8</option></select>
+            <button onclick="app.loadTeacherReportData()" style="width: auto; padding: 0 20px;">🔍 ดูสรุป</button>
+        </div>
+        <div class="stat-grid">
+            <div class="stat-box"><h4 id="tr-ma">0</h4><p style="margin:0; color:#198754; font-weight:bold;">มาเรียน</p></div>
+            <div class="stat-box"><h4 id="tr-la">0</h4><p style="margin:0; color:#0dcaf0; font-weight:bold;">ลากิจ/ป่วย</p></div>
+            <div class="stat-box"><h4 id="tr-sai">0</h4><p style="margin:0; color:#ffc107; font-weight:bold;">มาสาย</p></div>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <thead style="background:#dc3545; color:white;"><tr><th>รหัส</th><th>ชื่อ-นามสกุล</th><th>วิชา</th><th>สถานะ</th></tr></thead>
+            <tbody id="tr-body"><tr><td colspan="4" style="text-align:center;">กดปุ่มดูสรุปเพื่อโหลดข้อมูล</td></tr></tbody>
+        </table>
+    </div>
 
+    <div id="adminDashboard" class="hidden">
+        <div class="card" style="margin-bottom: 15px; padding: 15px; display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0;">📊 รายงานระดับโรงเรียน (Admin)</h2>
+            <button class="btn-outline btn-small" onclick="ui.show('teacherDashboard')">ย้อนกลับ</button>
+        </div>
         <div class="card">
             <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
-                <input type="text" id="admin-dateFilter" placeholder="ค้นหาวันที่ (เช่น 15/08/2026)" style="flex:1;">
-                <input type="text" id="admin-roomFilter" placeholder="ค้นหาวิชา หรือ ชื่อเด็ก" style="flex:1;">
+                <input type="text" id="admin-dateFilter" placeholder="วันที่ (DD/MM/YYYY)" style="flex:1;">
+                <input type="text" id="admin-roomFilter" placeholder="ค้นหาวิชา/ชื่อเด็ก" style="flex:1;">
                 <button onclick="app.filterSchoolReport()" style="width: auto; padding: 0 20px;">🔍 ค้นหา</button>
-                <button class="btn-outline" onclick="app.loadSchoolReport()" style="width: auto; padding: 0 20px;">รีเซ็ต</button>
                 <button class="btn-green" onclick="app.exportToCSV()" style="width: auto; padding: 0 20px; color: white;">📥 โหลด Excel</button>
             </div>
-
             <div class="stat-grid">
-                <div class="stat-box"><h4 id="admin-ma">0</h4><p style="margin:0; color:#198754; font-weight:bold;">ยอดมาเรียน</p></div>
-                <div class="stat-box"><h4 id="admin-la">0</h4><p style="margin:0; color:#0dcaf0; font-weight:bold;">ยอดลากิจ/ป่วย</p></div>
-                <div class="stat-box"><h4 id="admin-sai">0</h4><p style="margin:0; color:#ffc107; font-weight:bold;">ยอดมาสาย</p></div>
+                <div class="stat-box"><h4 id="admin-ma">0</h4><p style="margin:0; color:#198754;">ยอดมาเรียน</p></div>
+                <div class="stat-box"><h4 id="admin-la">0</h4><p style="margin:0; color:#0dcaf0;">ยอดลากิจ/ป่วย</p></div>
+                <div class="stat-box"><h4 id="admin-sai">0</h4><p style="margin:0; color:#ffc107;">ยอดมาสาย</p></div>
             </div>
-
-            <div class="table-wrap" style="max-height: 500px;">
+            <div class="table-wrap" style="max-height: 400px;">
                 <table id="adminTable">
-                    <thead><tr><th>วันที่</th><th>เวลา</th><th>รหัสนักเรียน</th><th>ชื่อ-นามสกุล</th><th>วิชา</th><th>สถานะ</th></tr></thead>
+                    <thead><tr><th>วันที่</th><th>คาบ</th><th>ชื่อ-นามสกุล</th><th>วิชา</th><th>สถานะ</th></tr></thead>
                     <tbody id="adminBody"></tbody>
                 </table>
             </div>
@@ -158,29 +172,23 @@
 
     <div id="studentDashboard" class="hidden">
         <div class="card" style="text-align: center;">
-            <h2 id="s-welcome">สมุดพกพิจิตรดิจิทัล</h2>
-            <p id="s-info" style="color: #666;">กำลังโหลดข้อมูล...</p>
+            <h2 id="s-welcome">สมุดพกพิจิตรดิจิทัล</h2><p id="s-info" style="color: #666;">กำลังโหลดข้อมูล...</p>
             <button class="btn-outline btn-small" onclick="location.reload()">ออกจากระบบ</button>
         </div>
         <div class="card">
-            <h3>📊 สถิติการมาเรียนรวม</h3>
             <div class="stat-grid">
-                <div class="stat-box"><h4 id="stat-ma">0</h4><p style="margin:0; font-weight:bold; color:#198754;">มาเรียน</p></div>
-                <div class="stat-box"><h4 id="stat-la">0</h4><p style="margin:0; font-weight:bold; color:#0dcaf0;">ลากิจ/ป่วย</p></div>
-                <div class="stat-box"><h4 id="stat-sai">0</h4><p style="margin:0; font-weight:bold; color:#ffc107;">มาสาย</p></div>
+                <div class="stat-box"><h4 id="stat-ma">0</h4><p style="margin:0; color:#198754; font-weight:bold;">มาเรียน</p></div>
+                <div class="stat-box"><h4 id="stat-la">0</h4><p style="margin:0; color:#0dcaf0; font-weight:bold;">ลา</p></div>
+                <div class="stat-box"><h4 id="stat-sai">0</h4><p style="margin:0; color:#ffc107; font-weight:bold;">สาย</p></div>
             </div>
             <h3>🕒 ประวัติ 10 ครั้งล่าสุด</h3>
-            <table style="margin-top: 10px;">
-                <thead style="background: #f8f9fa; color: #333;"><tr><th>วันที่</th><th>วิชา</th><th>สถานะ</th></tr></thead>
-                <tbody id="s-historyBody"></tbody>
-            </table>
+            <table style="margin-top: 10px;"><thead style="background: #f8f9fa;"><tr><th>วันที่</th><th>วิชา</th><th>สถานะ</th></tr></thead><tbody id="s-historyBody"></tbody></table>
         </div>
     </div>
 </div>
 
 <script>
-    // ⚠️ นำ URL ของ Web App จาก GAS มาวางที่นี่ ⚠️
-    const API_URL = "https://script.google.com/macros/s/AKfycbz40uHPJnx_EVNvD9_KwsGJsS5JfklpcNNUS0uz4BE9vP_3xqRvxctkpPQZcNCDs45tRA/exec/exec"; 
+    const API_URL = "https://script.google.com/macros/s/AKfycbypqj7WaMIKvnJV3K8rIWIfXQHS_-8Vzr-r21t9pAguKLuqCgxNAqkoR2tuwYcreSPygQ/exec"; 
     const MODELS_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
     
     let stream, scanInt, faceMatcher, currentUsers = [];
@@ -189,16 +197,14 @@
 
     const ui = {
         show: (id) => {
-            ['homeView', 'teacherLoginView', 'studentLoginView', 'teacherDashboard', 'studentDashboard', 'adminDashboard'].forEach(v => document.getElementById(v).classList.add('hidden'));
+            ['homeView', 'teacherLoginView', 'studentLoginView', 'teacherDashboard', 'studentDashboard', 'adminDashboard', 'teacherReportView'].forEach(v => document.getElementById(v).classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
         }
     };
 
     const api = async (payload) => {
-        try {
-            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-            return await res.json();
-        } catch (e) { alert("การเชื่อมต่อมีปัญหา"); return { status: 'error' }; }
+        try { const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) }); return await res.json(); } 
+        catch (e) { return { status: 'error' }; }
     };
 
     const app = {
@@ -206,6 +212,11 @@
             document.getElementById('homeView').innerHTML += '<p style="color:green; font-size:12px; text-align:center;">กำลังโหลดระบบ AI...</p>';
             await Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(MODELS_URL), faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL), faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL)]);
             document.getElementById('homeView').lastChild.innerText = '✅ ระบบ AI พร้อมใช้งาน';
+            
+            // ตั้งค่าวันที่ปัจจุบันให้หน้า Report
+            const today = new Date().toLocaleDateString('en-GB');
+            document.getElementById('tr-date').value = today;
+            document.getElementById('admin-dateFilter').value = today;
         },
 
         // --- ระบบ Login ---
@@ -215,102 +226,76 @@
             const res = await api({ action: "login", username: u, password: p });
             if(res.status === "success") app.setupTeacher(res.user); else alert(res.message);
         },
-
         staffFaceLogin: async () => {
-            document.getElementById('t-login-status').innerText = "กำลังโหลดข้อมูลใบหน้าครู...";
+            document.getElementById('t-login-status').innerText = "กำลังโหลดข้อมูลใบหน้า...";
             const res = await api({ action: "getFaces", type: "staff" });
             if(res.status !== "success" || res.data.length === 0) return alert("ไม่พบข้อมูลใบหน้าครูในระบบ");
             faceMatcher = new faceapi.FaceMatcher(res.data.map(u => new faceapi.LabeledFaceDescriptors(u.id, [new Float32Array(u.f)])), 0.45);
             app.scanOnceLogin(res.data, 't-video', 't-login-cam', 't-login-status', (user) => app.setupTeacher({ id: user.id, name: user.n, role: user.r }));
         },
-
         studentFaceLogin: async () => {
             const room = document.getElementById('s-roomSel').value;
-            if(!room) return alert("กรุณาเลือกห้องเรียนก่อนครับ");
-            document.getElementById('s-roomSel').disabled = true;
-            document.getElementById('s-login-status').innerText = "กำลังโหลดข้อมูลห้อง " + room;
+            if(!room) return alert("กรุณาเลือกห้องเรียนก่อน");
+            document.getElementById('s-roomSel').disabled = true; document.getElementById('s-login-status').innerText = "กำลังโหลดข้อมูลห้อง " + room;
             const res = await api({ action: "getFaces", type: "student", room: room });
-            if(res.status !== "success" || res.data.length === 0) {
-                document.getElementById('s-roomSel').disabled = false; document.getElementById('s-login-status').innerText = "";
-                return alert("ไม่พบข้อมูลนักเรียนในห้องนี้");
-            }
+            if(res.status !== "success" || res.data.length === 0) { document.getElementById('s-roomSel').disabled = false; document.getElementById('s-login-status').innerText = ""; return alert("ไม่พบข้อมูลนักเรียน"); }
             faceMatcher = new faceapi.FaceMatcher(res.data.map(u => new faceapi.LabeledFaceDescriptors(u.id, [new Float32Array(u.f)])), 0.45);
             app.scanOnceLogin(res.data, 's-video', 's-login-cam', 's-login-status', (user) => app.setupStudent(user));
         },
-
         scanOnceLogin: async (userList, videoId, wrapId, statusId, callback) => {
             try {
                 const v = document.getElementById(videoId); const wrap = document.getElementById(wrapId); const status = document.getElementById(statusId);
-                wrap.classList.remove('hidden'); status.innerText = "กรุณามองกล้อง (กำลังสแกน...)";
+                wrap.classList.remove('hidden'); status.innerText = "กำลังสแกน...";
                 stream = await navigator.mediaDevices.getUserMedia({ video: true }); v.srcObject = stream;
-                
                 let attempts = 0;
                 const loginScanInt = setInterval(async () => {
                     attempts++;
                     const det = await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
                     if(det && faceMatcher) {
-                        const match = faceMatcher.findBestMatch(det.descriptor);
-                        const user = userList.find(u => u.id === match.label);
-                        if(user) {
-                            clearInterval(loginScanInt); stream.getTracks().forEach(t => t.stop());
-                            wrap.classList.add('hidden'); status.innerText = ""; callback(user);
-                        } else status.innerText = "⚠️ ใบหน้าไม่ตรงกับฐานข้อมูล ลองอีกครั้ง...";
+                        const match = faceMatcher.findBestMatch(det.descriptor); const user = userList.find(u => u.id === match.label);
+                        if(user) { clearInterval(loginScanInt); stream.getTracks().forEach(t => t.stop()); wrap.classList.add('hidden'); status.innerText = ""; callback(user); } 
+                        else status.innerText = "⚠️ ใบหน้าไม่ตรง ลองอีกครั้ง...";
                     }
-                    if(attempts > 15) { 
-                        clearInterval(loginScanInt); stream.getTracks().forEach(t => t.stop());
-                        wrap.classList.add('hidden'); status.innerText = "หมดเวลาแสกน กรุณากดปุ่มใหม่";
-                        if(document.getElementById('s-roomSel')) document.getElementById('s-roomSel').disabled = false;
-                    }
+                    if(attempts > 15) { clearInterval(loginScanInt); stream.getTracks().forEach(t => t.stop()); wrap.classList.add('hidden'); status.innerText = "หมดเวลาแสกน กดปุ่มใหม่"; if(document.getElementById('s-roomSel')) document.getElementById('s-roomSel').disabled = false; }
                 }, 600);
             } catch(e) { alert("เปิดกล้องไม่ได้"); }
         },
 
-        // --- ตั้งค่าหน้าจอ ---
         setupTeacher: async (user) => {
             window.me = user;
             document.getElementById('t-welcome').innerText = `👨‍🏫 ครู${user.name}`;
             if(user.role === 'admin' || user.role === 'Admin') document.getElementById('btnAdminReport').classList.remove('hidden');
             ui.show('teacherDashboard');
-            
             const res = await api({ action: "getSubjects", teacherId: user.id });
             const sel = document.getElementById('classSubSel');
             if(res.status === "success" && res.data.length > 0) sel.innerHTML = res.data.map(sub => `<option value="${sub}">${sub}</option>`).join('');
-            else sel.innerHTML = `<option value="">-- ยังไม่มีวิชา (กดเพิ่ม) --</option>`;
+            else sel.innerHTML = `<option value="">-- ยังไม่มีวิชา --</option>`;
         },
-
         setupStudent: async (user) => {
             ui.show('studentDashboard');
-            document.getElementById('s-welcome').innerText = `ยินดีต้อนรับ ${user.n}`;
-            document.getElementById('s-info').innerText = `รหัส: ${user.id} | ห้อง: ${user.rm}`;
+            document.getElementById('s-welcome').innerText = `ยินดีต้อนรับ ${user.n}`; document.getElementById('s-info').innerText = `รหัส: ${user.id} | ห้อง: ${user.rm}`;
             const res = await api({ action: "getStudentReport", studentId: user.id });
             if(res.status === "success") {
-                document.getElementById('stat-ma').innerText = res.stats['มา'] || 0;
-                document.getElementById('stat-la').innerText = res.stats['ลา'] || 0;
-                document.getElementById('stat-sai').innerText = res.stats['สาย'] || 0;
-                document.getElementById('s-historyBody').innerHTML = res.history.length === 0 ? `<tr><td colspan="3" style="text-align:center;">ยังไม่มีประวัติ</td></tr>` : 
-                    res.history.map(h => `<tr><td>${new Date(h.date).toLocaleDateString('th-TH')}</td><td>${h.subject}</td><td><b>${h.status}</b></td></tr>`).join('');
+                document.getElementById('stat-ma').innerText = res.stats['มา'] || 0; document.getElementById('stat-la').innerText = res.stats['ลา'] || 0; document.getElementById('stat-sai').innerText = res.stats['สาย'] || 0;
+                document.getElementById('s-historyBody').innerHTML = res.history.length === 0 ? `<tr><td colspan="3" style="text-align:center;">ยังไม่มีประวัติ</td></tr>` : res.history.map(h => `<tr><td>${new Date(h.date).toLocaleDateString('th-TH')}</td><td>${h.subject}</td><td><b>${h.status}</b></td></tr>`).join('');
             }
         },
 
-        // --- ระบบวิชาของครู ---
-        addNewSubject: async () => {
-            const sub = prompt("พิมพ์ชื่อวิชาใหม่ (เช่น คณิตศาสตร์ ป.5):");
-            if(sub) {
-                await api({ action: "addSubject", teacherId: window.me.id, subjectName: sub });
-                document.getElementById('classSubSel').innerHTML += `<option value="${sub}" selected>${sub}</option>`; alert("เพิ่มวิชาสำเร็จ");
+        // 🔴 ล้างกระดานเมื่อเปลี่ยนคาบ/วิชา/ห้อง
+        resetSession: () => {
+            checkedIn.clear(); // ล้างความจำว่าใครแสกนแล้ว
+            document.getElementById('liveLogs').innerHTML = "เริ่มคาบเรียนใหม่...";
+            if(currentUsers.length > 0) {
+                // คืนค่าตารางเป็นรอเช็ค
+                currentUsers.forEach(s => {
+                    const td = document.getElementById(`stat-${s.id}`);
+                    if(td) { td.innerText = "รอเช็ค"; td.className = "status-รอเช็ค"; }
+                });
             }
         },
 
-        deleteSubject: async () => {
-            const sel = document.getElementById('classSubSel'); const sub = sel.value;
-            if(!sub) return alert("กรุณาเลือกวิชาที่ต้องการลบ");
-            if(!confirm(`ยืนยันที่จะลบวิชา "${sub}" ใช่หรือไม่?`)) return;
-            const res = await api({ action: "deleteSubject", teacherId: window.me.id, subjectName: sub });
-            if(res.status === "success") { sel.remove(sel.selectedIndex); alert("ลบวิชาสำเร็จ"); } else alert(res.message);
-        },
-
-        // --- ระบบแผงควบคุม (เช็คชื่อ) ---
         loadClassroom: async () => {
+            app.resetSession();
             const room = document.getElementById('classRoomSel').value;
             if(!room) return;
             document.getElementById('roomTitle').innerText = `(${room})`;
@@ -319,62 +304,60 @@
             if(res.status === "success") {
                 currentUsers = res.data;
                 faceMatcher = new faceapi.FaceMatcher(currentUsers.map(u => new faceapi.LabeledFaceDescriptors(u.id, [new Float32Array(u.f)])), 0.45);
-                document.getElementById('studentBody').innerHTML = currentUsers.map(s => `<tr><td>${s.n}</td><td id="stat-${s.id}" style="color:#666;">รอเช็ค</td><td><button class="btn-small" style="background:#0dcaf0;" onclick="app.manualMark('${s.id}','${s.n}','ลา')">ลา</button><button class="btn-small" style="background:#ffc107; color:black;" onclick="app.manualMark('${s.id}','${s.n}','สาย')">สาย</button></td></tr>`).join('');
+                // 🔴 อัปเดตตาราง: เพิ่มปุ่ม "มา" ให้กดด้วยมือได้
+                document.getElementById('studentBody').innerHTML = currentUsers.map(s => `<tr><td>${s.n}</td><td id="stat-${s.id}" class="status-รอเช็ค">รอเช็ค</td>
+                <td><button class="btn-small btn-green" onclick="app.manualMark('${s.id}','${s.n}','มา')">มา</button>
+                <button class="btn-small btn-blue" onclick="app.manualMark('${s.id}','${s.n}','ลา')">ลา</button>
+                <button class="btn-small btn-yellow" onclick="app.manualMark('${s.id}','${s.n}','สาย')">สาย</button></td></tr>`).join('');
             }
         },
 
-        openEnrollment: async () => {
-            const id = prompt("ระบุ รหัสประจำตัว (ที่มีในชีต Staff หรือ Students) เพื่อบันทึกหน้า:");
-            if(!id) return;
-            window.enrollId = id; window.isMode = 'enroll';
-            document.getElementById('video-wrap').classList.remove('hidden'); document.getElementById('status-msg').innerText = "มองกล้องให้นิ่ง...";
-            app.startLiveCam();
+        addNewSubject: async () => {
+            const sub = prompt("พิมพ์ชื่อวิชาใหม่:");
+            if(sub) { await api({ action: "addSubject", teacherId: window.me.id, subjectName: sub }); document.getElementById('classSubSel').innerHTML += `<option value="${sub}" selected>${sub}</option>`; app.resetSession(); alert("เพิ่มวิชาสำเร็จ"); }
+        },
+        deleteSubject: async () => {
+            const sel = document.getElementById('classSubSel'); const sub = sel.value;
+            if(!sub) return alert("เลือกวิชาที่ต้องการลบ");
+            if(confirm(`ลบวิชา "${sub}" ?`)) { const res = await api({ action: "deleteSubject", teacherId: window.me.id, subjectName: sub }); if(res.status==="success"){sel.remove(sel.selectedIndex); app.resetSession();} else alert(res.message); }
         },
 
+        openEnrollment: async () => {
+            const id = prompt("ระบุ รหัสประจำตัว (Staff หรือ Students) เพื่อบันทึกหน้า:");
+            if(!id) return; window.enrollId = id; window.isMode = 'enroll';
+            document.getElementById('video-wrap').classList.remove('hidden'); document.getElementById('status-msg').innerText = "มองกล้องให้นิ่ง..."; app.startLiveCam();
+        },
         startAttendance: () => {
             if(!document.getElementById('classRoomSel').value || !document.getElementById('classSubSel').value) return alert("เลือกห้องและวิชาก่อนครับ");
             window.isMode = 'attendance';
-            document.getElementById('video-wrap').classList.remove('hidden'); document.getElementById('status-msg').innerText = "✅ พร้อมสแกนหน้าครับ";
-            app.startLiveCam();
+            document.getElementById('video-wrap').classList.remove('hidden'); document.getElementById('status-msg').innerText = "✅ พร้อมสแกนหน้าครับ"; app.startLiveCam();
         },
-
         startLiveCam: async () => {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 const v = document.getElementById('video'); v.srcObject = stream;
                 v.onplay = () => {
-                    const canvas = faceapi.createCanvasFromMedia(v);
-                    document.getElementById('video-container').append(canvas);
-                    faceapi.matchDimensions(canvas, { width: v.clientWidth, height: v.clientHeight });
+                    const canvas = faceapi.createCanvasFromMedia(v); document.getElementById('video-container').append(canvas); faceapi.matchDimensions(canvas, { width: v.clientWidth, height: v.clientHeight });
                     let processing = false;
-
                     scanInt = setInterval(async () => {
                         if(processing) return;
                         const det = await faceapi.detectSingleFace(v, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
                         if(det) {
-                            canvas.getContext('2d').clearRect(0,0, canvas.width, canvas.height);
-                            faceapi.draw.drawDetections(canvas, faceapi.resizeResults(det, { width: v.clientWidth, height: v.clientHeight }));
-
+                            canvas.getContext('2d').clearRect(0,0, canvas.width, canvas.height); faceapi.draw.drawDetections(canvas, faceapi.resizeResults(det, { width: v.clientWidth, height: v.clientHeight }));
                             if(window.isMode === 'enroll') {
                                 processing = true; document.getElementById('status-msg').innerText = "⏳ กำลังส่งข้อมูล...";
-                                const res = await api({ action: "saveFace", username: window.enrollId, descriptor: Array.from(det.descriptor) });
-                                alert(res.message); app.closeScanner(); return;
+                                const res = await api({ action: "saveFace", username: window.enrollId, descriptor: Array.from(det.descriptor) }); alert(res.message); app.closeScanner(); return;
                             }
-
                             if(window.isMode === 'attendance' && faceMatcher && currentUsers.length > 0) {
-                                const match = faceMatcher.findBestMatch(det.descriptor);
-                                const std = currentUsers.find(s => s.id === match.label);
+                                const match = faceMatcher.findBestMatch(det.descriptor); const std = currentUsers.find(s => s.id === match.label);
                                 if(std) {
-                                    if(checkedIn.has(std.id)) { document.getElementById('status-msg').innerText = `👌 ${std.n} เช็คไปแล้ว`; return; }
-                                    processing = true; document.getElementById('status-msg').innerText = `✨ พบใบหน้า: ${std.n}...`;
+                                    if(checkedIn.has(std.id) && document.getElementById(`stat-${std.id}`).innerText === "มา") return; // ข้ามถ้าเช็คมาแล้ว
+                                    processing = true; document.getElementById('status-msg').innerText = `✨ บันทึก: ${std.n}...`;
                                     
-                                    const res = await api({ action: "markAttendance", studentId: std.id, studentName: std.n, subject: document.getElementById('classSubSel').value, period: document.getElementById('classPeriodSel').value, status: "มา", teacherId: window.me.id });
-                                    if(res.status === "success") {
-                                        checkedIn.add(std.id); app.updateLog(std.n, "มา");
-                                        document.getElementById(`stat-${std.id}`).innerText = "มา"; document.getElementById(`stat-${std.id}`).className = "status-มา";
-                                        document.getElementById('status-msg').innerText = `✅ บันทึก ${std.n} สำเร็จ`;
-                                        setTimeout(() => { processing = false; document.getElementById('status-msg').innerText = "🔍 พร้อมสแกนคนต่อไป..."; }, 3000);
-                                    } else processing = false;
+                                    // 🔴 เรียกใช้ฟังก์ชัน ManualMark เพื่ออัปเดตหน้าจอและส่ง API (Upsert)
+                                    app.manualMark(std.id, std.n, "มา", true);
+                                    
+                                    setTimeout(() => { processing = false; document.getElementById('status-msg').innerText = "🔍 พร้อมสแกนคนต่อไป..."; }, 2500);
                                 }
                             }
                         }
@@ -383,75 +366,73 @@
             } catch(e) { alert("เปิดกล้องไม่ได้"); }
         },
 
-        manualMark: (id, name, status) => {
-            if(checkedIn.has(id)) return alert("นักเรียนคนนี้เช็คไปแล้ว");
-            document.getElementById(`stat-${id}`).innerText = status; document.getElementById(`stat-${id}`).className = `status-${status}`;
-            checkedIn.add(id); app.updateLog(name, status);
+        // 🔴 โหมดติ๊กด้วยมือ (เขียนทับได้ตลอด)
+        manualMark: (id, name, status, isFromAI = false) => {
+            document.getElementById(`stat-${id}`).innerText = status; 
+            document.getElementById(`stat-${id}`).className = `status-${status}`;
+            checkedIn.add(id); 
+            app.updateLog(name, status);
+            
+            // ส่งไปอัปเดต (Upsert) ใน Sheet
             api({ action: "markAttendance", studentId: id, studentName: name, subject: document.getElementById('classSubSel').value, period: document.getElementById('classPeriodSel').value, status: status, teacherId: window.me.id });
+            
+            if(!isFromAI && document.getElementById('status-msg')) {
+                document.getElementById('status-msg').innerText = `✅ เปลี่ยนสถานะ ${name} เป็น ${status}`;
+            }
         },
 
         updateLog: (name, status) => {
             const logBox = document.getElementById('liveLogs');
             const timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-            logBox.innerHTML = `<div><b>${name}</b> - ${status} <span style="color:#aaa;">(${timeStr})</span></div>` + (logBox.innerText === "ยังไม่มีข้อมูล" ? "" : logBox.innerHTML);
+            let logHTML = `<div><b>${name}</b> - <span class="status-${status}">${status}</span> <span style="color:#aaa;">(${timeStr})</span></div>`;
+            logBox.innerHTML = logHTML + (logBox.innerText.includes("ยังไม่มี") || logBox.innerText.includes("เริ่มคาบ") ? "" : logBox.innerHTML);
         },
+        closeScanner: () => { clearInterval(scanInt); if(stream) stream.getTracks().forEach(t => t.stop()); document.querySelectorAll('canvas').forEach(c => c.remove()); document.getElementById('video-wrap').classList.add('hidden'); },
 
-        closeScanner: () => {
-            clearInterval(scanInt); if(stream) stream.getTracks().forEach(t => t.stop());
-            document.querySelectorAll('canvas').forEach(c => c.remove()); document.getElementById('video-wrap').classList.add('hidden');
+        // --- 🔴 รายงานส่วนตัวครู ---
+        loadTeacherReport: () => {
+            ui.show('teacherReportView');
+            document.getElementById('tr-body').innerHTML = '<tr><td colspan="4" style="text-align:center;">กรุณากดปุ่มดูสรุป</td></tr>';
         },
-
-        // --- ระบบ Admin Report & CSV Export ---
-        loadSchoolReport: async () => {
-            ui.show('adminDashboard');
-            document.getElementById('adminBody').innerHTML = '<tr><td colspan="6" style="text-align:center;">กำลังโหลดข้อมูลทั้งโรงเรียน...</td></tr>';
-            const res = await api({ action: "getSchoolReport" });
+        loadTeacherReportData: async () => {
+            const dateStr = document.getElementById('tr-date').value; const period = document.getElementById('tr-period').value;
+            if(!dateStr) return alert("กรุณาใส่วันที่");
+            document.getElementById('tr-body').innerHTML = '<tr><td colspan="4" style="text-align:center;">กำลังโหลด...</td></tr>';
+            
+            const res = await api({ action: "getTeacherReport", teacherId: window.me.id, date: dateStr, period: period });
             if(res.status === "success") {
-                allSchoolData = res.data;
-                const today = new Date().toLocaleDateString('en-GB'); 
-                document.getElementById('admin-dateFilter').value = today;
-                app.filterSchoolReport(); 
+                let stats = { มา: 0, ลา: 0, สาย: 0 };
+                res.data.forEach(r => { if(stats[r.status] !== undefined) stats[r.status]++; });
+                document.getElementById('tr-ma').innerText = stats['มา']; document.getElementById('tr-la').innerText = stats['ลา']; document.getElementById('tr-sai').innerText = stats['สาย'];
+                
+                if(res.data.length === 0) document.getElementById('tr-body').innerHTML = '<tr><td colspan="4" style="text-align:center;">ไม่พบข้อมูลการสอนในคาบนี้</td></tr>';
+                else document.getElementById('tr-body').innerHTML = res.data.map(r => `<tr><td>${r.id}</td><td>${r.name}</td><td>${r.subject}</td><td class="status-${r.status}">${r.status}</td></tr>`).join('');
             }
         },
 
-        filterSchoolReport: () => {
-            const dateF = document.getElementById('admin-dateFilter').value.toLowerCase();
-            const textF = document.getElementById('admin-roomFilter').value.toLowerCase();
-            
-            const filtered = allSchoolData.filter(r => {
-                const matchDate = !dateF || r.date.toString().includes(dateF);
-                const matchText = !textF || r.subject.toLowerCase().includes(textF) || r.name.toLowerCase().includes(textF) || r.studentId.toString().includes(textF);
-                return matchDate && matchText;
-            });
-
-            let stats = { มา: 0, ลา: 0, สาย: 0 };
-            filtered.forEach(r => { if(stats[r.status] !== undefined) stats[r.status]++; });
-            
-            document.getElementById('admin-ma').innerText = stats['มา'];
-            document.getElementById('admin-la').innerText = stats['ลา'];
-            document.getElementById('admin-sai').innerText = stats['สาย'];
-
-            const tbody = document.getElementById('adminBody');
-            if(filtered.length === 0) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">ไม่พบข้อมูลตามเงื่อนไขที่ค้นหา</td></tr>';
-            else tbody.innerHTML = filtered.map(r => `<tr><td>${r.date}</td><td>${r.time}</td><td>${r.studentId}</td><td>${r.name}</td><td>${r.subject}</td><td class="status-${r.status}">${r.status}</td></tr>`).join('');
+        // --- รายงานโรงเรียน (Admin) + Export ---
+        loadSchoolReport: async () => {
+            ui.show('adminDashboard');
+            document.getElementById('adminBody').innerHTML = '<tr><td colspan="5" style="text-align:center;">กำลังโหลดข้อมูลทั้งโรงเรียน...</td></tr>';
+            const res = await api({ action: "getSchoolReport" });
+            if(res.status === "success") { allSchoolData = res.data; app.filterSchoolReport(); }
         },
-
+        filterSchoolReport: () => {
+            const dateF = document.getElementById('admin-dateFilter').value.toLowerCase(); const textF = document.getElementById('admin-roomFilter').value.toLowerCase();
+            const filtered = allSchoolData.filter(r => (!dateF || r.date.toString().includes(dateF)) && (!textF || r.subject.toLowerCase().includes(textF) || r.name.toLowerCase().includes(textF)));
+            let stats = { มา: 0, ลา: 0, สาย: 0 }; filtered.forEach(r => { if(stats[r.status] !== undefined) stats[r.status]++; });
+            document.getElementById('admin-ma').innerText = stats['มา']; document.getElementById('admin-la').innerText = stats['ลา']; document.getElementById('admin-sai').innerText = stats['สาย'];
+            
+            const tbody = document.getElementById('adminBody');
+            if(filtered.length === 0) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">ไม่พบข้อมูล</td></tr>';
+            else tbody.innerHTML = filtered.map(r => `<tr><td>${r.date}</td><td>คาบ ${r.period}</td><td>${r.name}</td><td>${r.subject}</td><td class="status-${r.status}">${r.status}</td></tr>`).join('');
+        },
         exportToCSV: () => {
             const tbody = document.getElementById('adminBody');
-            if(!tbody || tbody.innerText.includes("กำลังโหลด") || tbody.innerText.includes("ไม่พบข้อมูล")) return alert("ไม่มีข้อมูลให้ส่งออกครับ");
-
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; 
-            csvContent += "วันที่,เวลา,รหัสนักเรียน,ชื่อ-นามสกุล,วิชา,สถานะ\n";
-            const rows = tbody.querySelectorAll('tr');
-            rows.forEach(row => {
-                const cols = row.querySelectorAll('td');
-                if(cols.length === 6) csvContent += Array.from(cols).map(c => `"${c.innerText}"`).join(",") + "\n";
-            });
-
-            const link = document.createElement("a");
-            const filterDate = document.getElementById('admin-dateFilter').value || 'ทั้งหมด';
-            link.setAttribute("href", encodeURI(csvContent));
-            link.setAttribute("download", `รายงานเข้าเรียน_${filterDate.replace(/\//g, '-')}.csv`);
+            if(tbody.innerText.includes("กำลังโหลด") || tbody.innerText.includes("ไม่พบข้อมูล")) return alert("ไม่มีข้อมูลให้ส่งออก");
+            let csv = "data:text/csv;charset=utf-8,\uFEFFวันที่,คาบ,ชื่อ-นามสกุล,วิชา,สถานะ\n";
+            tbody.querySelectorAll('tr').forEach(row => { const cols = row.querySelectorAll('td'); if(cols.length===5) csv += Array.from(cols).map(c => `"${c.innerText}"`).join(",") + "\n"; });
+            const link = document.createElement("a"); link.setAttribute("href", encodeURI(csv)); link.setAttribute("download", `รายงานเข้าเรียน.csv`);
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
     };
